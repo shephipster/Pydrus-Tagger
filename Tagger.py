@@ -1,29 +1,41 @@
-import DanbooruApi
+import DanbooruService
+import TwitterService
+import GelbooruService
 
 class Tagger:
 
     def getGelbooruTags(references):
-        # for r in references:
-        #     print(r)
-        return
-
-    def getDanbooruTags(references):
         allTags = set()
         for r in references:
-            tags = DanbooruApi.getTagsFromId(r[1])
+            tags = GelbooruService.getTagsFromId(r[1])
             for t in tags:
                 allTags.add(t)
         return allTags
 
-    def getTwitterTags(references):
-        # for r in references:
-        #     print(r)
-        return
+    def getDanbooruTags(references):
+        allTags = set()
+        for r in references:
+            tags = DanbooruService.getTagsFromId(r[1])
+            for t in tags:
+                allTags.add(t)
+        return allTags
 
+    #Sankaku doesn't seem to have a publicly available API, so unless I can find/fake one this is dead in the water
     def getSankakuTags(references):
         # for r in references:
         #     print(r)
         return
+
+
+    def getTwitterTags(references):
+        allTags = set()
+        for r in references:
+            tags = TwitterService.getTagsFromId(r[1])
+            for t in tags:
+                allTags.add(t)
+        return allTags
+
+
 
     def getPixivTags(references):
         # for r in references:

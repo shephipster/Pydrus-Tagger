@@ -1,16 +1,17 @@
 import requests
 import os
 import sys
-import json
-from SauceNaoRequestObject import SauceNaoRequestObject
-from Tagger import Tagger
+
 from dotenv import load_dotenv
+from Tagger import Tagger
+from SauceNaoRequestObject import SauceNaoRequestObject
 
 
 load_dotenv()
 
 SAUCE_NAO_BASE = "https://saucenao.com/search.php"
 API_KEY = os.getenv('SAUCE_NAO_API_KEY')
+LIMIT = float(os.getenv('THRESHOLD'))
 
 #runner method
 def test():    
@@ -35,12 +36,12 @@ def getAllTags():
         #Add all tags to a set to prevent duplicates
         for t in dTags:
             tags.add(t)
-        # for t in gTags:
-        #     tags.add(t)
+        for t in gTags:
+            tags.add(t)
         # for t in sTags:
-        #     tags.add(t)
-        # for t in tTags:
-        #     tags.add(t)
+        #      tags.add(t)
+        for t in tTags:
+            tags.add(t)
         # for t in pTags:
         #     tags.add(t)
 
@@ -71,7 +72,7 @@ def getLinks(body):
 
     results = body["results"]
     for r in results:
-        if( float(r["header"]["similarity"]) > 95.0):
+        if( float(r["header"]["similarity"]) > LIMIT):
             #Close enough of a match, start pulling urls and ids
             for u in r["data"]["ext_urls"]:
                 if(u.__contains__("pixiv.net")):
@@ -101,5 +102,10 @@ class DanbooruRequestObject:
     def __init__(self, key):
         self.api_key = key
 
-tags = getAllTags()
-print(tags)
+def main():
+    tags = getAllTags()
+    print(tags)
+
+
+if __name__ == "__main__":
+    main()
