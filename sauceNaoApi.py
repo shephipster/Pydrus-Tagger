@@ -1,11 +1,9 @@
 import requests
 import os
-import sys
 
 from dotenv import load_dotenv
 from Tagger import Tagger
 from SauceNaoRequestObject import SauceNaoRequestObject
-
 
 load_dotenv()
 
@@ -18,12 +16,17 @@ def test():
     snro = SauceNaoRequestObject(API_KEY)
     print(snro.getKey())
 
+#This is a proposed method, will be implemented eventually (probably)
+def containsTags(list, *tags):
+    #TODO: Return true if the list contains the provided tags
+    #useful if you want to, say, not get pinged for bunnysuits
+    #unless a certain other tag is included.
+    #trap/crossdressing/otokonoko. Let's not kid ourselves here
+    return False
+
 #Main runner, takes the url as a param and returns the set of all tags (no duplicates)
-def getAllTags():
-    if( len(sys.argv) < 2):
-        print("Usage: python3 sauceNaoApi.py <url>")
-    else:
-        resp = fetchFromSauceNao(sys.argv[1])
+def getAllTags(url):
+        resp = fetchFromSauceNao(url)
         refs = getLinks(resp)
         dTags = Tagger.getDanbooruTags(refs["danbooru"])
         gTags = Tagger.getGelbooruTags(refs["gelbooru"])
@@ -101,11 +104,3 @@ def getLinks(body):
 class DanbooruRequestObject:
     def __init__(self, key):
         self.api_key = key
-
-def main():
-    tags = getAllTags()
-    print(tags)
-
-
-if __name__ == "__main__":
-    main()
