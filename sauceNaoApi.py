@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from Tagger import Tagger
 from SauceNaoRequestObject import SauceNaoRequestObject
 
+
 load_dotenv()
 
 SAUCE_NAO_BASE = "https://saucenao.com/search.php"
@@ -25,14 +26,54 @@ def containsTags(list, *tags):
     return False
 
 #Main runner, takes the url as a param and returns the set of all tags (no duplicates)
-def getAllTags(url):
-        resp = fetchFromSauceNao(url)
+def getAllTagsFromUrl(url):
+        resp = fetchURLFromSauceNao(url)
         refs = getLinks(resp)
+
+        #supported DBs
+        """ 
+            - H-Magazines
+            - H-Game CG
+            - DoujinshiDB
+            X pixiv
+            - nico nico
+            ✓ danbooru
+            - drawr
+            - nijie
+            ✓ yande.re
+            - shutterstock
+            - fakku
+            - H-Misc nH
+            - 2D-market
+            - MediBang
+            - Anime
+            - H-Anime
+            - Movies
+            - Shows
+            ✓ Gelbooru
+            - Konachan
+            X Sankaku
+            - Anime-Pictures.net
+            ✓ e621
+            - Idol Complex
+            - bcy.net
+            - PortalGraphics.net
+            - deviantArt
+            - Pawoo
+            - Madokami
+            - MangaDex
+            - H-Misc eH
+            - ArtStation
+            - FurAffinity
+            ✓ Twitter
+            - Furry Network
+        """
+
         dTags = Tagger.getDanbooruTags(refs["danbooru"])
         gTags = Tagger.getGelbooruTags(refs["gelbooru"])
-        sTags = Tagger.getSankakuTags(refs["sankaku"])
         tTags = Tagger.getTwitterTags(refs["twitter"])
-        pTags = Tagger.getPixivTags(refs["pixiv"])
+        eTags = Tagger.getE621Tags(refs["e621"])
+        yTags = Tagger.getYandereTags(refs["yandere"])
 
         tags = set()
 
@@ -41,18 +82,59 @@ def getAllTags(url):
             tags.add(t)
         for t in gTags:
             tags.add(t)
-        # for t in sTags:
-        #      tags.add(t)
         for t in tTags:
             tags.add(t)
-        # for t in pTags:
-        #     tags.add(t)
+        for t in eTags:
+            tags.add(t)
+        for t in yTags:
+            tags.add(t)
 
         return tags
 
+def getAllTagsFromFile(file):
+    tags = set()
+    body = fetchFileFromSauceNao(file)
+    links = getLinks(body)
+
+    dTags = Tagger.getDanbooruTags(links["danbooru"])
+    gTags = Tagger.getGelbooruTags(links["gelbooru"])
+    tTags = Tagger.getTwitterTags(links["twitter"])
+    eTags = Tagger.getE621Tags(links["e621"])
+    yTags = Tagger.getYandereTags(links["yandere"])
+
+    for t in dTags:
+        tags.add(t)
+    for t in gTags:
+        tags.add(t)
+    for t in tTags:
+        tags.add(t)
+    for t in eTags:
+        tags.add(t)
+    for t in yTags:
+        tags.add(t)
+
+    return tags
+
+def fetchFileFromSauceNao(file):
+    snro = SauceNaoRequestObject(API_KEY)
+
+    payload = {'db': snro.getDb(), 'output_type': snro.getOutputType(), 
+    'testmode':snro.getTestmode(), 'numres': snro.getNumres(), 
+    'api_key': snro.getKey()}
+
+    body = { 
+        'file': (os.path.basename(file), open(file, 'rb'))
+     } 
+
+    r = requests.post(SAUCE_NAO_BASE, params = payload, files=body)
+
+    responseJson = r.json()
+    return responseJson
+
+
 
 #Retrieve a response body from SauceNao after looking up the url
-def fetchFromSauceNao(url):
+def fetchURLFromSauceNao(url):
     snro = SauceNaoRequestObject(API_KEY)
     snro.setUrl(url)
 
@@ -72,35 +154,44 @@ def getLinks(body):
     gelbooruReferences = []
     sankakuReferences = []
     twitterReferences = []
+    e621References = []
+    yandereReferences = []
+    animePicturesReferences = []
 
     results = body["results"]
+
     for r in results:
-        if( float(r["header"]["similarity"]) > LIMIT):
+        if( float(r["header"]["similarity"]) >= LIMIT):
+            data = r["data"]
+            if 'ext_urls' in data.keys():
             #Close enough of a match, start pulling urls and ids
-            for u in r["data"]["ext_urls"]:
-                if(u.__contains__("pixiv.net")):
-                    pixivReferences.append( (u, r["data"]["pixiv_id"]) )
-                elif(u.__contains__("twitter.com")):
-                    twitterReferences.append( (u, r["data"]["tweet_id"]) )
-                elif(u.__contains__("danbooru.donmai.us")):
-                    danbooruReferences.append( (u, r["data"]["danbooru_id"]) )
-                elif(u.__contains__("gelbooru.com")):
-                    gelbooruReferences.append( (u, r["data"]["gelbooru_id"]) )
-                elif(u.__contains__("chan.sankakucomplex.com")):
-                    sankakuReferences.append( (u, r["data"]["sankaku_id"]) )
+                for u in data["ext_urls"]:
+                    if(u.__contains__("pixiv.net")):
+                        pixivReferences.append( (u, data["pixiv_id"]) )
+                    elif(u.__contains__("twitter.com")):
+                        twitterReferences.append( (u, data["tweet_id"]) )
+                    elif(u.__contains__("danbooru.donmai.us")):
+                        danbooruReferences.append( (u, data["danbooru_id"]) )
+                    elif(u.__contains__("gelbooru.com")):
+                        gelbooruReferences.append( (u, data["gelbooru_id"]) )
+                    elif(u.__contains__("chan.sankakucomplex.com")):
+                        sankakuReferences.append( (u, data["sankaku_id"]) )
+                    elif(u.__contains__("e621.net")):
+                        e621References.append( (u, data["e621_id"]))
+                    elif(u.__contains__("yande.re")):
+                        yandereReferences.append( (u, data["yandere_id"]))
+                    elif(u.__contains__("anime-pictures.net")):
+                        animePicturesReferences.append( (u, data["anime-pictures_id"]))
 
     references = {
         "pixiv": pixivReferences,
         "danbooru": danbooruReferences,
         "gelbooru": gelbooruReferences,
         "sankaku": sankakuReferences,
-        "twitter": twitterReferences
+        "twitter": twitterReferences,
+        "e621": e621References,
+        "yandere": yandereReferences,
+        "animePictures": animePicturesReferences
     }
 
     return references
-
-
-#Define an object that stores all the api data for a Danbooru request
-class DanbooruRequestObject:
-    def __init__(self, key):
-        self.api_key = key

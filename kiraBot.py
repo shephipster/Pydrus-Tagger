@@ -214,12 +214,14 @@ async def slide(ctx):
 
 """ Using the brand new SauceNaoAPI that I wrote - Shephipster"""
 def sauceNaoLookup(url):
-	tags = sauceNaoApi.getAllTags(url)
+	tags = sauceNaoApi.getAllTagsFromUrl(url)
 	return tags
 
 
 #This code does work, and it works well. However, with the new sauceNaoApi it's not
 #really needed anymore. We're leaving it in though because of its influence.
+#Also, if there's any 'heavy' searching (5 in 30s and 300 in 24h) the SN API will
+#lock out, so we might have to resort to calling this one if that happens
 
 # def query_iqdb(filename):
 # 	""" Gets the search result page for a danbooru iqdb search on filename  """
