@@ -2,6 +2,7 @@ import requests
 import os
 
 from dotenv import load_dotenv
+from HydrusApi import getTags
 from Tagger import Tagger
 from SauceNaoRequestObject import SauceNaoRequestObject
 
@@ -11,6 +12,7 @@ load_dotenv()
 SAUCE_NAO_BASE = "https://saucenao.com/search.php"
 API_KEY = os.getenv('SAUCE_NAO_API_KEY')
 LIMIT = float(os.getenv('THRESHOLD'))
+FILE_SIZE_LIMIT_IN_BYTES = 8388608 #8Mb, not sure if this is actually correct by a 6.89Mb worked so probably a safe bet
 
 #runner method
 def test():    
@@ -92,10 +94,13 @@ def getAllTagsFromUrl(url):
         return tags
 
 def getAllTagsFromFile(file):
-    tags = set()
+
     body = fetchFileFromSauceNao(file)
     links = getLinks(body)
+    return getTagsFromLinks(links)
 
+def getTagsFromLinks(links):
+    tags = set()
     dTags = Tagger.getDanbooruTags(links["danbooru"])
     gTags = Tagger.getGelbooruTags(links["gelbooru"])
     tTags = Tagger.getTwitterTags(links["twitter"])
@@ -129,6 +134,10 @@ def fetchFileFromSauceNao(file):
     r = requests.post(SAUCE_NAO_BASE, params = payload, files=body)
 
     responseJson = r.json()
+    if responseJson['header']['status'] == -2:
+        #Ran out of searched, throw error
+        raise OutOfSearchesError
+
     return responseJson
 
 
@@ -146,6 +155,17 @@ def fetchURLFromSauceNao(url):
 
     responseJson = r.json()
     return responseJson
+
+def getAllFromFile(path):
+    body = fetchFileFromSauceNao(path)
+    links = getLinks(body)
+    tags = getTagsFromLinks(links)
+    results = {
+        "links": links,
+        "tags": tags
+    }
+    return results
+
 
 #Takes the json body of a saucenao request and returns a dict of all found (link: id)
 def getLinks(body):
@@ -195,3 +215,6 @@ def getLinks(body):
     }
 
     return references
+
+class OutOfSearchesException(Exception):
+    pass
