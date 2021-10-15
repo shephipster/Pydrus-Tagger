@@ -10,12 +10,6 @@ How to use:
   You'll need to have a .env file that contains all of your API keys because I am _NOT_ giving mine out
   You can also import from sauceNaoApi if you want
   
-Imported libraries
-  Request
-  python-dotenv
-  
 Notice:
   I have written AI, Machine Learning algorithms, multivariate calculus solvers, and auto-pinging Discord bots in Python, so naturally
-  I have not Earthly idea how I have managed to write any of this. If something's busted don't expect any fast fixes.
-  
-  
+  I have not Earthly idea how I have managed to write any of this. If something's busted don't expect any fast fixes. 
