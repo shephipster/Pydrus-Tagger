@@ -34,5 +34,10 @@ def getTagsFromId(id):
     url = create_url(id)
     headers = create_headers(BEARER_TOKEN)
     data = connect_to_endpoint(url, headers)
+
+    #Check in case a tweet was deleted/not authorized
+    if 'errors' in data.keys():
+        return set()
+
     tags = getTags(data['data'])
     return tags

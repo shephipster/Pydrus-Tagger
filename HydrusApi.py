@@ -102,8 +102,13 @@ def getMeta(id):
 """0- current, 1- pending, 2- deleted, 3-petitioned"""
 def getTags(id):
     meta = getMeta(id)
-    service_names_to_statuses_to_tags = meta['service_names_to_statuses_to_tags']['all known tags']['0']
-    return service_names_to_statuses_to_tags
+    service_names_to_statuses_to_tags = meta['service_names_to_statuses_to_tags']['all known tags']
+    if '0' in service_names_to_statuses_to_tags.keys():
+        tags = service_names_to_statuses_to_tags['0']
+        #For some reason, some seem to have it all in 2, even though that's deleted stuff
+    elif '2' in service_names_to_statuses_to_tags.keys():
+        tags = service_names_to_statuses_to_tags['2']
+    return tags
 
 def getUrls(id):
     meta = getMeta(id)
@@ -167,3 +172,33 @@ def addTag(id, tag):
     }
     res = requests.post(url, json=body, headers=header)
     return res
+
+""" Deletes a tag and adds the new one
+    Mostly useful for tag 'cleaning', removing
+    hashtags from Twitter and percent-encoded tags
+    This does NOT push tags to PTR
+"""
+def updateTag(id, oldTag, newTag):
+
+    if oldTag == newTag:
+        return #same thing, why bother
+
+    hash = getMeta(id)['hash']
+    url = HYDRUS_URL + "add_tags/add_tags"
+    body = {
+        "hash": hash,
+        "service_names_to_tags": {
+            "my tags": {
+                "0": newTag,
+                "1": oldTag
+            }
+        }
+    }
+    return
+
+def fileExists(id):
+    res = getMetaData(id)
+    if res.status_code != 200:
+        return False
+    else:
+        return True

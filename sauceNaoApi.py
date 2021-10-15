@@ -12,7 +12,8 @@ load_dotenv()
 SAUCE_NAO_BASE = "https://saucenao.com/search.php"
 API_KEY = os.getenv('SAUCE_NAO_API_KEY')
 LIMIT = float(os.getenv('THRESHOLD'))
-FILE_SIZE_LIMIT_IN_BYTES = 8388608 #8Mb, not sure if this is actually correct by a 6.89Mb worked so probably a safe bet
+#8Mb = 8388608, 
+FILE_SIZE_LIMIT_IN_BYTES = 8388608
 
 #runner method
 def test():    
@@ -136,7 +137,16 @@ def fetchFileFromSauceNao(file):
     responseJson = r.json()
     if responseJson['header']['status'] == -2:
         #Ran out of searched, throw error
-        raise OutOfSearchesError
+        raise OutOfSearchesException
+
+    if responseJson['header']['status'] == -4:
+        #For some reason the image was not accepted
+        raise ImageNotAcceptedException
+
+    if responseJson['header']['status'] == -6:
+        #Image was too small in dimensions, not allowed
+        raise ImageNotAcceptedException
+
 
     return responseJson
 
@@ -217,4 +227,7 @@ def getLinks(body):
     return references
 
 class OutOfSearchesException(Exception):
+    pass
+
+class ImageNotAcceptedException(Exception):
     pass
