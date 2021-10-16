@@ -200,7 +200,6 @@ def getLinks(body):
     yandereReferences = []
     animePicturesReferences = []
 
-    print(body)
     results = body["results"]
 
     for r in results:
