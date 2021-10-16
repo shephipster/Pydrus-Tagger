@@ -30,3 +30,4 @@ Notice:
   Will consider encrypting certain data in the users.json if security is a concern for people, but for now since tags are mentioned anyway it
   doesn't make a whole lot of sense.
   Considering adding a feature where you can turn off tag mentioning, so you'll still get pinged but it won't say why (if you opt for that)
+  Will add a check for twitter API, so if you don't want to sign up for that you can opt to leave it empty
