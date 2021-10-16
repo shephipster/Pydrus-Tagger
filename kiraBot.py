@@ -1,6 +1,5 @@
 import discord
 import requests
-import re
 import json
 import time
 import imagehash

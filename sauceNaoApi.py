@@ -166,12 +166,12 @@ def fetchURLFromSauceNao(url):
         'db': 999,
         'numres': 16,
         'dedupe': 2,
-        'url': "",
+        'url': url,
     }
 
     payload = {'db': snro['db'], 'output_type': snro['output_type'], 
     'testmode':snro['testmode'], 'numres': snro['numres'], 
-    'api_key': snro['key']}
+    'api_key': snro['key'], 'url': snro['url']}
 
     r = requests.get(SAUCE_NAO_BASE, params = payload)
 
@@ -200,6 +200,7 @@ def getLinks(body):
     yandereReferences = []
     animePicturesReferences = []
 
+    print(body)
     results = body["results"]
 
     for r in results:
