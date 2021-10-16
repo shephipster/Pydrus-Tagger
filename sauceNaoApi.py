@@ -2,9 +2,7 @@ import requests
 import os
 
 from dotenv import load_dotenv
-from HydrusApi import getTags
 from Tagger import Tagger
-from SauceNaoRequestObject import SauceNaoRequestObject
 
 
 load_dotenv()
@@ -14,11 +12,6 @@ API_KEY = os.getenv('SAUCE_NAO_API_KEY')
 LIMIT = float(os.getenv('THRESHOLD'))
 #8Mb = 8388608, 
 FILE_SIZE_LIMIT_IN_BYTES = 8388608
-
-#runner method
-def test():    
-    snro = SauceNaoRequestObject(API_KEY)
-    print(snro.getKey())
 
 #This is a proposed method, will be implemented eventually (probably)
 def containsTags(list, *tags):
@@ -122,11 +115,21 @@ def getTagsFromLinks(links):
     return tags
 
 def fetchFileFromSauceNao(file):
-    snro = SauceNaoRequestObject(API_KEY)
+    snro = {
+        'output_type': 2,
+        'key': API_KEY,
+        'testmode': True,
+        'dbmask': 0,
+        'dbmaski': 0,
+        'db': 999,
+        'numres': 16,
+        'dedupe': 2,
+        'url': "",
+    }
 
-    payload = {'db': snro.getDb(), 'output_type': snro.getOutputType(), 
-    'testmode':snro.getTestmode(), 'numres': snro.getNumres(), 
-    'api_key': snro.getKey()}
+    payload = {'db': snro['db'], 'output_type': snro['output_type'], 
+    'testmode':snro['testmode'], 'numres': snro['numres'], 
+    'api_key': snro['key']}
 
     body = { 
         'file': (os.path.basename(file), open(file, 'rb'))
@@ -154,12 +157,21 @@ def fetchFileFromSauceNao(file):
 
 #Retrieve a response body from SauceNao after looking up the url
 def fetchURLFromSauceNao(url):
-    snro = SauceNaoRequestObject(API_KEY)
-    snro.setUrl(url)
+    snro = {
+        'output_type': 2,
+        'key': API_KEY,
+        'testmode': True,
+        'dbmask': 0,
+        'dbmaski': 0,
+        'db': 999,
+        'numres': 16,
+        'dedupe': 2,
+        'url': "",
+    }
 
-    payload = {'db': snro.getDb(), 'output_type': snro.getOutputType(), 
-    'testmode':snro.getTestmode(), 'numres': snro.getNumres(), 
-    'url': snro.getUrl(), 'api_key': snro.getKey()}
+    payload = {'db': snro['db'], 'output_type': snro['output_type'], 
+    'testmode':snro['testmode'], 'numres': snro['numres'], 
+    'api_key': snro['key']}
 
     r = requests.get(SAUCE_NAO_BASE, params = payload)
 
