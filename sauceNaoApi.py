@@ -13,14 +13,6 @@ LIMIT = float(os.getenv('THRESHOLD'))
 #8Mb = 8388608, 
 FILE_SIZE_LIMIT_IN_BYTES = 8388608
 
-#This is a proposed method, will be implemented eventually (probably)
-def containsTags(list, *tags):
-    #TODO: Return true if the list contains the provided tags
-    #useful if you want to, say, not get pinged for bunnysuits
-    #unless a certain other tag is included.
-    #trap/crossdressing/otokonoko. Let's not kid ourselves here
-    return False
-
 #Main runner, takes the url as a param and returns the set of all tags (no duplicates)
 def getAllTagsFromUrl(url):
         resp = fetchURLFromSauceNao(url)
