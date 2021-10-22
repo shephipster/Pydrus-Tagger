@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 #This is assuming that Hydrus is running on the same machine
-HYDRUS_URL = "http://127.0.0.1:45869/"
+HYDRUS_URL = os.getenv("HYDRUS_URL")
 HYDRUS_KEY = os.getenv('HYDRUS_API_KEY')
 
 header = {
@@ -15,10 +15,26 @@ header = {
     'User-Agent' : "Pydrus-Client/1.0.0"
 }
 
+def getLastId():
+    url = HYDRUS_URL + f"get_files/search_files?tags=[\"system:limit=1\"]"
+    res = requests.get(url, headers=header)
+    body = res.json()
+    id = body['file_ids'][0]
+    return id
+
 #Loads in the file and then saves it to a temp file. Returns the temp file
 def getImageById(id):
+
+    #commented out to save on API calls to Hydrus, P-Tagger handles this check
+    # if getLastId() < id:
+    #     return None
+
     url = HYDRUS_URL + f"get_files/file?file_id={id}"
     res = requests.get(url, headers=header)
+
+    if(res.headers['Content-Type'] == "text/html"):
+        if (res.headers['Content-Length'] == '44' or res.headers['Content-Length'] == '25'):
+            return None
 
     fileType = getFileType(res.headers['Content-Type'])
     cwd = os.getcwd()

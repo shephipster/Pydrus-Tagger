@@ -18,6 +18,10 @@ def fillInfo(id):
     open('tempFiles/logs.txt', 'a', encoding="utf-8")
 
     image = HydrusApi.getImageById(id)
+    if image == None:
+        return False
+    
+        
     #make sure we can actually look the image up.
     #accepted formats are jpg, gif, png, jpeg, bmp
     valid = False
@@ -64,13 +68,21 @@ def fillInfo(id):
         return False
 
 
+
+
 def main(start, amount):
     calls = 0
     id = start
     time_start = datetime.now()
     begin = time.perf_counter()
     print(f'Starting tagging service at {time_start.strftime("%H:%M:%S")}')
+    max_id = HydrusApi.getLastId()
     while calls < amount:
+        if id > max_id:
+            print(f'Tagged the last image (id: {id}). Stopping program...', file = open('tempFiles/logs.txt', 'a', encoding="utf-8"))
+            break
+        if id % 10000 == 0:
+            print(id)
         if fillInfo(id):
             calls += 1
             time.sleep(DELAY)   #sleep just to make sure we don't exceede saucenao limits
@@ -110,11 +122,8 @@ def loopMain(start, count, iters):
     for i in range(0, iters):
         newId = main(oldId, count)
         if i != iters - 1:
-            time.sleep(60)
+            time.sleep(120)
         oldId = newId
 
 if __name__ == "__main__":
-    #main(int(sys.argv[1]), int(sys.argv[2]))
-    #cleanTags(int(sys.argv[1]), int(sys.argv[2]))
     loopMain(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
-
