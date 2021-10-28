@@ -117,6 +117,38 @@ def cleanTags(start, count):
         iter += 1
     return
 
+def tag(page):
+    calls = 0
+    time_start = datetime.now()
+    begin = time.perf_counter()
+    print(f'Starting tagging service at {time_start.strftime("%H:%M:%S")}')
+
+    for file in page:
+        if fillInfo(file):
+            calls += 1   
+
+    time_stop = datetime.now()
+    end = time.perf_counter()
+
+    elapsed_time = end - begin
+    elapsed_seconds = int(elapsed_time)
+    elapsed_minutes = int(elapsed_seconds / 60)
+    elapsed_seconds = elapsed_seconds % 60
+    time_string = f'{elapsed_minutes}m:{elapsed_seconds}s'
+
+    print(f'Stopped tagging service at {time_stop.strftime("%H:%M:%S")}')
+    print(f'Elapsed time: {time_string} seconds')
+    print(f'Finished making {calls} api calls. Last file was {page[-1]}')
+
+def newLoop(start, count, iters):
+    currPage = HydrusApi.getPage(start, count)
+    for i in range(0, iters):
+        tag(currPage)
+        currStart = HydrusApi.getNextPageStart(currPage)
+        currPage = HydrusApi.getPage(currStart, count)
+        if i < iters -1:
+            time.sleep(120)
+
 def loopMain(start, count, iters):
     oldId = start
     for i in range(0, iters):
@@ -126,4 +158,5 @@ def loopMain(start, count, iters):
         oldId = newId
 
 if __name__ == "__main__":
-    loopMain(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
+    #loopMain(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))
+    newLoop(int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]))

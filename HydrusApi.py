@@ -15,6 +15,20 @@ header = {
     'User-Agent' : "Pydrus-Client/1.0.0"
 }
 
+def getAllFileIds():
+    url = HYDRUS_URL + f"get_files/search_files?"
+    res = requests.get(url, headers=header)
+    ids = res.json()['file_ids']
+    return sorted(ids)
+
+def getPage(start, range):
+    allIds = getAllFileIds()
+    page = list(filter(lambda id: id >= start, allIds))[:range]
+    return page
+
+def getNextPageStart(lastPage):
+    return getPage(lastPage[-1], 2)[-1]
+
 def getLastId():
     url = HYDRUS_URL + f"get_files/search_files?tags=[\"system:limit=1\"]"
     res = requests.get(url, headers=header)
@@ -175,6 +189,17 @@ def addKnownURLToFile(id, url):
     res = requests.post(targetUrl, json=payload, headers=header)
     return res
 
+def uploadURL(url, title = "Pydrus"):
+    """ Uploads a URL to Hydrus to let installed parsers do the work """
+    hydrus_url = HYDRUS_URL + "add_urls/add_url"
+    body = {
+        "url": url,
+        "destination_page_name": title
+    }
+
+    res = requests.post(hydrus_url, json=body, headers=header)
+    return res
+
 def addTag(id, tag):
     hash = getMeta(id)['hash']
     url = HYDRUS_URL + "add_tags/add_tags"
@@ -218,3 +243,28 @@ def fileExists(id):
         return False
     else:
         return True
+
+def getImageByHash(hash):
+
+    #commented out to save on API calls to Hydrus, P-Tagger handles this check
+    # if getLastId() < id:
+    #     return None
+
+    url = HYDRUS_URL + f"get_files/file?hash={hash}"
+    res = requests.get(url, headers=header)
+
+    if(res.headers['Content-Type'] == "text/html"):
+        if (res.headers['Content-Length'] == '44' or res.headers['Content-Length'] == '25'):
+            return None
+
+    fileType = getFileType(res.headers['Content-Type'])
+    cwd = os.getcwd()
+    fileName = f'{cwd}\\tempFiles\\temp{fileType}'
+
+    if not os.path.exists('tempFiles'):
+        os.makedirs('tempFiles')
+
+    with open(fileName, 'wb') as tmp:
+        for chunk in res.iter_content(128):
+            tmp.write(chunk)
+    return fileName

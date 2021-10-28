@@ -11,7 +11,7 @@ SAUCE_NAO_BASE = "https://saucenao.com/search.php"
 API_KEY = os.getenv('SAUCE_NAO_API_KEY')
 LIMIT = float(os.getenv('THRESHOLD'))
 #8Mb = 8388608, 
-FILE_SIZE_LIMIT_IN_BYTES = 8388608
+FILE_SIZE_LIMIT_IN_BYTES = 20000000 #20mb
 
 #Main runner, takes the url as a param and returns the set of all tags (no duplicates)
 def getAllTagsFromUrl(url):
@@ -136,6 +136,7 @@ def fetchFileFromSauceNao(file):
 
     if responseJson['header']['status'] == -4:
         #For some reason the image was not accepted
+        #I've not figured out why this happens sometimes with perfectly valid files, but it just does
         raise ImageNotAcceptedException
 
     if responseJson['header']['status'] == -6:
@@ -191,6 +192,7 @@ def getLinks(body):
     e621References = []
     yandereReferences = []
     animePicturesReferences = []
+    remainingReferences = []
 
     results = body["results"]
 
@@ -216,6 +218,8 @@ def getLinks(body):
                         yandereReferences.append( (u, data["yandere_id"]))
                     elif(u.__contains__("anime-pictures.net")):
                         animePicturesReferences.append( (u, data["anime-pictures_id"]))
+                    else:
+                        remainingReferences.append(u)
 
     references = {
         "pixiv": pixivReferences,
@@ -225,7 +229,8 @@ def getLinks(body):
         "twitter": twitterReferences,
         "e621": e621References,
         "yandere": yandereReferences,
-        "animePictures": animePicturesReferences
+        "animePictures": animePicturesReferences,
+        "remainingReferences": remainingReferences
     }
 
     return references

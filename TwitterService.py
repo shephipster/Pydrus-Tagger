@@ -7,12 +7,12 @@ load_dotenv()
 TWITTER_URL = "https://api.twitter.com/2/tweets/{}"
 BEARER_TOKEN = os.getenv('TWITTER_BEARER_TOKEN')
 
-def create_headers(bearer_token):
+def create_headers(bearer_token = BEARER_TOKEN):
     headers = {'Authorization': 'Bearer {}'.format(bearer_token)}
     return headers
 
 def create_url(id):
-    url = f'https://api.twitter.com/2/tweets/{id}?tweet.fields=text'
+    url = f'https://api.twitter.com/2/tweets/{id}?tweet.fields=entities'
     return url
 
 def connect_to_endpoint(url, headers):
@@ -24,10 +24,11 @@ def connect_to_endpoint(url, headers):
 
 def getTags(data):
     tags = set()
-    parts = str.split(data['text'])
-    for p in parts:
-        if p.startswith('#'):
-            tags.add(p)
+
+    if "hashtags" in data['entities'].keys():
+        res = data['entities']['hashtags']
+        for tag in res:
+            tags.add(tag['tag'])    
     return tags
 
 def getTagsFromId(id):
