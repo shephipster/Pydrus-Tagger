@@ -10,7 +10,6 @@ class ProcessedFilesIo:
     def hashInFile(self, hashcode):
         """ For now we'll just assume the system has the space to keep all ids in memory"""
         return hashcode in ProcessedFilesIo.hashes
-        #TODO: Binary search
 
     def load():
         file = open(ProcessedFilesIo.HASH_FILE, 'r')

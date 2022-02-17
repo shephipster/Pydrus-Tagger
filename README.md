@@ -15,21 +15,12 @@ Notice:
   I have not Earthly idea how I have managed to write any of this. If something's busted don't expect any fast fixes. 
   
 #Kira-Bot
-  
-  Kira Bot exists as a discord bot that will alert users if an image is posted that has tags they like. For example, if a user
-  requests to hear about bunny_suits then anytime an image with a bunny_suit tag is posted then they'll get pinged. Pings can
-  be turned on or off, tags added or removed, etc.
-  
-  You can either get Kira bot from https://discord.com/api/oauth2/authorize?client_id=891426527223349258&permissions=68672&scope=bot
-  or you can host her yourself by downloading these files and running kiraBot.py
-  
   If you're just using the discord Kira Bot, you can ignore the HydrusAPI, Pydrus, and tester.
   You just need to make sure you still have the following in your .env file:
   Twitter Bearer Token API, SauceNao API Token, Threshold percent (90.0 is a good value), Discord API Key and Token
   You can also ignore the files HydrusAPI and Pydrus-Tagger in that case
   Once everything is installed and loaded, just call python3 .\kiraBot.py and let it run. Will update if problems are found, as well
   as if any improvements come up.
-  Make sure you set up your api stuff if you plan to run Kira bot yourself at discord.com/developers/applications
   
 #Notes
    Since this uses SauceNao, if too many searches happen at once a problem can occur and no results will return. You also only have

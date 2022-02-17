@@ -14,14 +14,19 @@ def getTagsFromId(id):
     finalString = GELBOORU_URL.format(id, '')
     resp = requests.get(finalString)
     respJson = resp.json()
+    tagStr = ""
+
+    items = respJson['post'][0].items()
+    for i in items:
+        if('tags' in i):
+            tagStr = i[1]
 
     tags = set()
 
     #Gelbooru returns the results as an array since you can technically look up multiple things at once. This is to future-proof
     #things and prevent duplicate tags while getting them all, just in case this Service allows multiple concurrent lookups
-    for entry in respJson:
-        tagList = str.split(entry['tags'])
-        for tag in tagList:
-            tags.add(tag)
+    tagList = str.split(tagStr)
+    for tag in tagList:
+        tags.add(tag)
 
     return tags

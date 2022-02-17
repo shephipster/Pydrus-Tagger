@@ -21,6 +21,15 @@ def getAllFileIds():
     ids = res.json()['file_ids']
     return sorted(ids)
 
+def getAllFileHashes():
+    ids = getAllFileIds()
+    hashes = []
+    for id in ids:
+        hash = getMeta(id)['hash']
+        print("%s : %s" % (id, hash))
+        hashes.append(hash)
+
+
 def getPage(start, range):
     allIds = getAllFileIds()
     page = list(filter(lambda id: id >= start, allIds))[:range]
@@ -28,6 +37,14 @@ def getPage(start, range):
 
 def getNextPageStart(lastPage):
     return getPage(lastPage[-1], 2)[-1]
+
+def getReversePage(start, range):
+    allIds = getAllFileIds()
+    page = list(filter(lambda id: id > start, allIds))[:range]
+    return page
+
+def getReverseNextPageStart(lastPage):
+    return getReversePage(lastPage[0], 2)[-1]
 
 def getLastId():
     url = HYDRUS_URL + f"get_files/search_files?tags=[\"system:limit=1\"]"
@@ -176,8 +193,33 @@ def addTags(id, *tags):
     res = requests.post(url, json=body, headers=header)
     return res
 
+def addTagByHash(hash, tag):
+    url = HYDRUS_URL + "add_tags/add_tags"
+    tagList = [tag]
+
+    body = {
+        "hash": hash,
+        "service_names_to_tags": {
+            "my tags": tagList
+        }
+    }
+    res = requests.post(url, json=body, headers=header)
+    return res
+
 def addKnownURLToFile(id, url):
     hash = getMeta(id)['hash']
+    #Having to guess, but think known urls fall under tags
+    targetUrl = HYDRUS_URL + "add_urls/associate_url"
+
+    payload = {
+        "hash": hash,
+        "url_to_add": url
+    }
+
+    res = requests.post(targetUrl, json=payload, headers=header)
+    return res
+
+def addKnownURLToFileByHash(hash, url):
     #Having to guess, but think known urls fall under tags
     targetUrl = HYDRUS_URL + "add_urls/associate_url"
 

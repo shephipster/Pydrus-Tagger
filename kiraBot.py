@@ -340,7 +340,7 @@ async def myCombos(ctx):
 	message = ""
 	id = 1
 	for combo in user.tagCombos:
-		message += f"{id}) {combo}\n"
+		message += f"{id} {combo}\n"
 		id += 1
 
 	if message == "":
@@ -493,7 +493,8 @@ async def ping_people(ctx, tag_list):
 						message += f"`{combo}``, "
 				message = message[:-2]
 
-	await ctx.send(message)
+	if message != "":
+		await ctx.channel.send(message)
 
 	with open(tagFile, "w") as dataFile:
 		json.dump(data, dataFile, indent = 4)
