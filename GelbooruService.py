@@ -16,10 +16,11 @@ def getTagsFromId(id):
     respJson = resp.json()
     tagStr = ""
 
-    items = respJson['post'][0].items()
-    for i in items:
-        if('tags' in i):
-            tagStr = i[1]
+    if 'post' in respJson:
+        items = respJson['post'][0].items()
+        for i in items:
+            if('tags' in i):
+                tagStr = i[1]
 
     tags = set()
 

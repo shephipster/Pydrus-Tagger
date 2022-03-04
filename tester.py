@@ -1,6 +1,3 @@
-import HydrusApi
-import sauceNaoApi
-import GelbooruService
+import Utils.GelbooruService as GelbooruService
 
-tags = GelbooruService.getTagsFromId(3679063)
-print(tags)
+print(GelbooruService.getTagsFromId(6997725))

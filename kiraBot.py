@@ -4,6 +4,8 @@ import json
 import time
 import imagehash
 import os
+import re
+from random import choice, choices, randint
 from dotenv import load_dotenv
 
 import TagAPI
@@ -471,7 +473,7 @@ async def ping_people(ctx, tag_list):
 	#Not going to be nearly as efficient, but at this point I don't care. Re-loop through everything to generate the message
 	for loopUser in loggedUsers:
 		if loopUser.notify:
-			message += f"@{loopUser.id}"
+			message += f"<@{loopUser.id}>"
 			if loopUser.specifyTags:
 				message += " for "
 				for tag in tag_list:
@@ -557,6 +559,65 @@ async def changeDelay(ctx, delay):
 async def setDelay(ctx, delay):
 	await changeDelay(ctx, delay)
 
+@bot.command()
+async def roll(ctx, regex):
+	numRollsGroup = re.search("\d+d",regex)
+	diceSizeGroup = re.search("d\d+",regex)
+	if not numRollsGroup or not diceSizeGroup:
+		await ctx.channel.send("The format is \{numDice\}d\{diceSize\}. Try 7d12 as an example.")
+	else:
+		numRolls = int(numRollsGroup.group()[:-1])
+		diceSize = int(diceSizeGroup.group()[1:])
+		rolls = list()
+		total = 0
+		for x in range(0,numRolls):
+			roll = randint(1,diceSize)
+			rolls.append(roll)
+			total += roll
+		message = "" + str(regex) + ": " + str(rolls) + "\nTotal: " + str(total)
+		await ctx.channel.send(message)
+
+@bot.command()
+async def random(ctx, *inputs):
+		#get how many to select, 1 if none provided
+	instructions = ""
+	for i in inputs:
+		instructions += i
+	selectionsGroup = re.search("\d*\s*\[", instructions)
+
+	if (selectionsGroup.group() == '['):
+		numSelections = 1
+	else:
+		numSelections = int(selectionsGroup.group()[:-1])
+
+	#get the list of options
+	groupOptions = re.search("\[.+\]", instructions)
+	options = groupOptions.group()[1:-1].split(',')
+
+	#do we replace after a pick?
+	replace = False
+	replaceGroup = re.search("\]\s*.+", instructions)
+	if replaceGroup:
+		replace = True
+
+	#can we select enough options if no replacement?
+	picked = list()
+	if replace == False:
+		if numSelections > options.__len__():
+			await ctx.channel.send("You're asking me to pick more things than you gave me. See if you forgot an option or typed the number in wrong.")
+		elif numSelections == options.__len__():
+			await ctx.channel.send("You're asking me to pick as many things as you gave, wouldn't that just be all of them? Double check you didn't type the number wrong.")
+		else:
+			for x in range(numSelections):
+				item = choice(options)
+				picked.append(item)
+				options.remove(item)
+			await ctx.channel.send(str(picked))
+	else:
+		picked = choices(options, k=numSelections)
+		await ctx.channel.send(str(picked))
+
+	
 
 def repostDetected(guild, file):
 #https://github.com/polachok/py-phash#:~:text=py-pHash%20Python%20bindings%20for%20libpHash%20%28http%3A%2F%2Fphash.org%2F%29%20A%20perceptual,file%20derived%20from%20various%20features%20from%20its%20content.
