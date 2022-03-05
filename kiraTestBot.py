@@ -21,8 +21,8 @@ from scipy.spatial import distance
 load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
-DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
-#DISCORD_API_KEY = os.getenv('DISCORD_TEST_API_KEY') #This is used for debugging
+#DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
+DISCORD_API_KEY = os.getenv('DISCORD_TEST_API_KEY') #This is used for debugging
 
 description = ''' Kira bot. Pings users for images that have tags they like. '''
 #Consts
@@ -31,7 +31,7 @@ debug = False;	#Too tired of deleting true or false, just comment out if you wan
 postTTL = -1;	#how long a post should be recorded before it is up for deletion. -1 for no time
 logSizeLimit = 255;	#number of images to record for repost detection, -1 for no limit (CAREFUL OF THIS)
 repostDistance = 10; #how similar an image must be to be a repost. Smaller means more similar, account for Discord compression
-JOKE_MODE = False
+JOKE_MODE = True
 
 intents = discord.Intents.default()
 intents.members = True
@@ -67,7 +67,10 @@ async def on_message(message):
 	channel = message.channel
 	if debug: print("Guild:" , message.channel.guild)
 	if message.author == bot.user:
+		#This causes bot to by-pass the repost filter. Do we care? I don't, and who would notice
+		print("Bot author, skipping post")
 		return
+
 	if "fuck you" in message.content.lower():
 		if "kira" in message.content.lower():
 			await channel.send("fuck me yourself, coward")
@@ -75,10 +78,12 @@ async def on_message(message):
 			await channel.send("fuck them yourself, coward")
 	elif "fuck me" in message.content.lower():
 		await channel.send("that's kinda gross dude")
+
 	if message.attachments and ( len(message.content) == 0  or message.content[0] != '+'):
 			for attachment in message.attachments:
 				imageLink =  attachment.url
 				tag_list = sauceNaoLookup(imageLink)
+				print("Pinging people on message")
 				await ping_people(message, tag_list)
 				if repostDetected(message.channel.guild, imageLink):
 					await message.add_reaction(str('♻️'))
@@ -590,11 +595,14 @@ async def randomPost(ctx, *tags):
 
 	await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
 	await ctx.channel.send(image)
-	await ping_people(ctx, tag_list)
+
 	if JOKE_MODE:
 		if post['rating'] == 'explicit':
 			poster = ctx.message.author.display_name
 			await ctx.channel.send(f"{poster} just rolled porn!", tts=True)
+	
+	#Double pings are occuring, might need investigation
+	await ping_people(ctx, tag_list)
 
 	return
 
