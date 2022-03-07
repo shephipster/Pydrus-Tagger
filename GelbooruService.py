@@ -34,13 +34,16 @@ def getTagsFromId(id):
     return tags
 
 def getRandomPostWithTags(*tags):
-    tagList = "-loli -shota "
+    tagList = ""
     for tag in tags[0]:
-        print(tag)
         tagList += tag + " "
     tagList = tagList[:-1]
     resp = requests.get("http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&limit=9999&tags=" + tagList)
     respJson = resp.json()
-    randPost = random.randint(0, len(respJson['post']) - 1)
-    post = respJson['post'][randPost]
-    return post
+    if 'post' in respJson.keys():
+        randPost = random.randint(0, len(respJson['post']) - 1)
+        post = respJson['post'][randPost]
+        return post
+    else:
+        print("Tag not found")
+        return None

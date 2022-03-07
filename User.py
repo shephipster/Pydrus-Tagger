@@ -44,6 +44,9 @@ class User:
     def setSpecifyTags(self, specifyTags: bool):
         self.specifyTags = specifyTags
 
+    def setTagCombos(self, tagCombos: list):
+        self.tagCombos = tagCombos
+
     def setFromDict(self, id, dict):
         self.id = id
         self.tags = dict['tags']
@@ -52,4 +55,4 @@ class User:
         self.name = dict['name']
         self.lastPing = dict['lastPing']
         self.specifyTags = dict['specifyTags']
-        self.tagCombos = dict['combos']
+        self.tagCombos = dict['tagCombos']

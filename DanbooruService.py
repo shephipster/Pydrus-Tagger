@@ -18,7 +18,6 @@ def getTagsFromUrl(url):
     return
 
 def getRandomPostWithTags(*tags):    
-    #tagList = "-loli -shota "
     tagList = ""
     for tag in tags[0]:
         tagList += tag + " "
