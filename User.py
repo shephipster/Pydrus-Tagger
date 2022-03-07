@@ -35,7 +35,7 @@ class User:
     def setName(self, name:str):
         self.name = name
 
-    def setLastPint(self, lastPing: float):
+    def setLastPing(self, lastPing: float):
         self.lastPing = lastPing
 
     def setPingDelay(self, pingDelay:int):
@@ -56,3 +56,6 @@ class User:
         self.lastPing = dict['lastPing']
         self.specifyTags = dict['specifyTags']
         self.tagCombos = dict['tagCombos']
+
+    def __str__(self) -> str:
+        return f"ID: {self.id}\nNickname: {self.name}\nTags: {self.tags}\nCombos: {self.tagCombos}\nBlacklist: {self.blacklist}\nDelay: {self.pingDelay}\nNotify: {self.notify}"

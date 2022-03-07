@@ -45,21 +45,11 @@ bot = commands.Bot(command_prefix='+',
                    description=description, intents=intents)
 
 testImage = 'https://cdn.discordapp.com/attachments/772128575213666309/772181178068762634/nfsuiefmiesfbosdtgd.png'
-tagFile = './kiraBotFiles/users.json'
 logFile = './kiraBotFiles/imageLog.json'
-IdFile = './kiraBotFiles/purgableIds.json'
-blacklistExplicitFile = './kiraBotFiles/bannedExplicitTags.json'
-blacklistGeneralFile = './kiraBotFiles/bannedGeneralTags.json'
 guildsFile = './kiraBotFiles/guilds.json'
 
 pic_ext = ['.jpg', '.png', '.gif', '.jpeg', '.bmp']
-BANNED_EXPLICIT_TAGS = ['loli', 'shota', 'cub']
-BANNED_ALL_TAGS = []
 ROLL_LIMIT = 10
-
-#ID's of people (including bots) that Kira is allowed to delete messages from
-PURGABLE_USER_IDS = [891426527223349258, 899043866102071336]
-
 
 @bot.event
 async def on_ready():
@@ -72,8 +62,8 @@ def initFiles():
 		with open(logFile, 'a') as file:
 			file.write("{\n}")
 
-	if not os.path.exists(tagFile):
-		with open(tagFile, 'a') as file:
+	if not os.path.exists(guildsFile):
+		with open(guildsFile, 'a') as file:
 			file.write("{\n}")
 
 
@@ -111,6 +101,10 @@ async def on_command_error(ctx, error):
 @bot.command()
 async def initGuild(ctx):
 	#for each file, if guild not already part of it add them
+	if type(ctx.channel) == discord.channel.DMChannel:
+		await ctx.channel.send("You can't use this command in a DM, how am I going to know what server you want?")
+		return
+
 	guildUID = str(ctx.guild.id)
 
 	f = open(guildsFile)
@@ -130,9 +124,16 @@ async def initGuild(ctx):
 	return
 
 
-async def processUser(ctx):
+async def processUser(ctx, guid=-1):
+	#If this is in DM's, there is no guild with an id
+	if not ctx.guild:
+		if guid == -1:
+			await ctx.channel.send("I'm having trouble knowing what guild you want.\nEither try that again in the guild you want to update stuff for or give me the guild ID")
+			return None, None
+	else:
+		guid = str(ctx.guild.id)
+
 	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
 
 	f = open(guildsFile)
 	data = json.load(f)
@@ -150,6 +151,9 @@ async def processUser(ctx):
 @bot.command()
 async def tagMe(ctx, *tags):
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
 
 	for tag in tags:
 		if tag not in user.tags:
@@ -165,6 +169,9 @@ async def tagMe(ctx, *tags):
 @bot.command()
 async def untagMe(ctx, *tags):
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
 
 	for tag in tags:
 		if tag in user.tags:
@@ -180,6 +187,9 @@ async def untagMe(ctx, *tags):
 @bot.command()
 async def blacklist(ctx, *tags):
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
 
 	for tag in tags:
 		if tag not in user.blacklist:
@@ -194,6 +204,9 @@ async def blacklist(ctx, *tags):
 @bot.command()
 async def unblacklist(ctx, *tags):
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
 
 	for tag in tags:
 		if tag in user.blacklist:
@@ -210,6 +223,9 @@ async def unblacklist(ctx, *tags):
 async def myBlacklist(ctx):
 
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
 
@@ -221,9 +237,13 @@ async def myBlacklist(ctx):
 @bot.command()
 async def nickname(ctx, name):
 
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 
 	data[guid]['users'][uid]["name"] = name
 	with open(guildsFile, "w") as dataFile:
@@ -234,9 +254,13 @@ async def nickname(ctx, name):
 
 @bot.command()
 async def checkTags(ctx):
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 	response = "Your tag list is: " + ", ".join(data[guid]['users'][uid]['tags'])
 	await ctx.channel.send(response)
 
@@ -258,9 +282,13 @@ async def setPing(ctx, state):
 		await ctx.channel.send("Not sure what that means. Use +help setNotify for the list you can use.")
 		return
 
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 	data[guid]['users'][uid]['notify'] = ping
 	message = "Alright, ping for you are now set to " + str(ping)
 	await ctx.channel.send(message)
@@ -280,9 +308,13 @@ async def hideTags(ctx, state):
 		await ctx.channel.send("Not sure what that means. Use +help hideTags for the list you can use.")
 		return
 
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 	data[guid]['users'][uid]['specifyTags'] = not hide
 	message = "Alright, hiding your tags is now set to " + str(not hide)
 	await ctx.channel.send(message)
@@ -298,9 +330,13 @@ async def slide(ctx):
 
 @bot.command()
 async def addCombo(ctx, *tags):
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 	user.tagCombos.append(tags)
 
 	with open(guildsFile, "w") as dataFile:
@@ -311,9 +347,10 @@ async def addCombo(ctx, *tags):
 
 @bot.command()
 async def myCombos(ctx):
-	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
 
 	message = ""
 	id = 1
@@ -330,9 +367,13 @@ async def myCombos(ctx):
 async def deleteCombo(ctx, id: int):
 	"""Removes the tag combination from your list of combos that has the given id"""
 	realId = id - 1
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 
 	message = ""
 	if user.tagCombos[realId]:
@@ -426,9 +467,13 @@ async def ping_people(ctx, tag_list):
 	if isPM:
 		return
 
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 
 	for user in data[guid]['users']:
 		tmpUser = User(user)
@@ -497,12 +542,16 @@ async def ping_people(ctx, tag_list):
 @bot.command()
 async def checkNotifications(ctx):
 	""" Tells you if you'll be pinged for images or only get a small mention """
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 	userName = user.name
 	try:
-		if data[str(ctx.author.id)]['notify']:
+		if data[guid]['users'][uid]['notify']:
 			await ctx.send(f"{userName}, you will get pinged for images with your tags.")
 			return
 		await ctx.send(f"{userName}, you will not be pinged for images with your tags.")
@@ -537,9 +586,13 @@ async def changeDelay(ctx, delay):
 		await ctx.channel.send("How am I supposed to wait for negative seconds? Just say 0 if you want no delay and use +toggleNotify if you don't want to be pinged.")
 		return
 
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
-	user, data = await processUser(ctx)
 
 	try:
 		data[guid]['users'][uid]['pingDelay'] = int(delay)
@@ -579,6 +632,14 @@ async def randomPost(ctx, *tags):
 	roll = True
 	num_rolls = 0
 
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+	guid = str(ctx.guild.id)
+
 	while roll:
 		roll = False
 
@@ -596,11 +657,11 @@ async def randomPost(ctx, *tags):
 		#Safety filter, if it's loli and explicit re-roll that junk
 		if isExplicit:
 			for tag in tag_list:
-				if tag in BANNED_EXPLICIT_TAGS:
+				if tag in data[guid]['bannedExplicitTags']:
 					roll = True
 					break
 		for tag in tag_list:
-			if tag in BANNED_ALL_TAGS:
+			if tag in data[guid]['bannedGeneralTags']:
 				roll = True
 				break
 
@@ -707,8 +768,15 @@ def postExpired(timePosted: float):
 @bot.command()
 async def removeMessage(ctx, id):
 	message = await ctx.channel.fetch_message(id)
-	#These are the hard-coded id's for Kira bot and the Test bot. Since we only want to handle those we can leave this here
-	if message.author.id in PURGABLE_USER_IDS:
+
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	guid = str(ctx.guild.id)
+
+	if message.author.id in data[guid]['purgableIds']:
 		await message.delete()
 	else:
 		await ctx.channel.send(f"I'm not allowed to delete stuff {message.author.name} posts")
@@ -717,6 +785,11 @@ async def removeMessage(ctx, id):
 
 @bot.command()
 async def addPurgablePoster(ctx, id):
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
 
@@ -738,6 +811,11 @@ async def addPurgablePoster(ctx, id):
 
 @bot.command()
 async def removePurgablePoster(ctx, id):
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
 	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
 
@@ -756,22 +834,29 @@ async def removePurgablePoster(ctx, id):
 			json.dump(data, dataFile, indent=4)
 		await ctx.channel.send(f"Okay, I can no longer delete {member.name}'s posts.")
 
+
 @bot.command()
 async def addBannedGeneralTags(ctx, *tags):
 	if ctx.author.id != ctx.guild.owner_id:
 		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
 		return
 
-	guid = str(ctx.guild.id)
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+	guid = str(ctx.guild.id)
 	for tag in tags:
 		if tag not in data[guid]['bannedGeneralTags']:
 			data[guid]['bannedGeneralTags'].append(tag)
 
 	with open(guildsFile, "w") as dataFile:
-			json.dump(data, dataFile, indent=4)
-	
+		json.dump(data, dataFile, indent=4)
+
 	await ctx.channel.send(f"Okay, I'll now no longer roll stuff with any of the following: {tags}")
+
 
 @bot.command()
 async def addBannedExplicitTags(ctx, *tags):
@@ -779,16 +864,22 @@ async def addBannedExplicitTags(ctx, *tags):
 		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
 		return
 
-	guid = str(ctx.guild.id)
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+	guid = str(ctx.guild.id)
 	for tag in tags:
 		if tag not in data[guid]['bannedExplicitTags']:
 			data[guid]['bannedExplicitTags'].append(tag)
-	
+
 	with open(guildsFile, "w") as dataFile:
-			json.dump(data, dataFile, indent=4)
-	
+		json.dump(data, dataFile, indent=4)
+
 	await ctx.channel.send(f"Okay, I'll now no longer roll explicit stuff with any of the following: {tags}")
+
 
 @bot.command()
 async def removeBannedGeneralTags(ctx, *tags):
@@ -796,16 +887,22 @@ async def removeBannedGeneralTags(ctx, *tags):
 		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
 		return
 
-	guid = str(ctx.guild.id)
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+	guid = str(ctx.guild.id)
 	for tag in tags:
 		if tag in data[guid]['bannedGeneralTags']:
 			data[guid]['bannedGeneralTags'].remove(tag)
 
 	with open(guildsFile, "w") as dataFile:
-			json.dump(data, dataFile, indent=4)
-	
+		json.dump(data, dataFile, indent=4)
+
 	await ctx.channel.send(f"Okay, I can now roll stuff with any of the following: {tags}")
+
 
 @bot.command()
 async def removeBannedExplicitTags(ctx, *tags):
@@ -813,16 +910,278 @@ async def removeBannedExplicitTags(ctx, *tags):
 		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
 		return
 
-	guid = str(ctx.guild.id)
 	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+	guid = str(ctx.guild.id)
 	for tag in tags:
 		if tag in data[guid]['bannedExplicitTags']:
 			data[guid]['bannedExplicitTags'].remove(tag)
 
 	with open(guildsFile, "w") as dataFile:
-			json.dump(data, dataFile, indent=4)
-	
+		json.dump(data, dataFile, indent=4)
+
 	await ctx.channel.send(f"Okay, I can now roll explicit stuff with any of the following: {tags}")
-	
+
+
+@bot.command()
+async def myServers(ctx):
+	user, data = await processUser(ctx)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+	guid = str(ctx.guild.id)
+	for guild in data:
+		await ctx.channel.send(f"You are in {data[guild]['name']}, ID: {data[guild]['id']}")
+	return
+
+
+#-------------This is the portion to let them do stuff in DM's to alleviate chat spam----------------------------------#
+
+@bot.command()
+async def addTagsByServer(ctx, guid, *tags):
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	if guid not in data.keys():
+		await ctx.channel.send(f"I don't know of any servers with the ID {guid}.\nUse `+myServers` to get a list of your servers and their ID")
+		return
+	else:
+		user.setFromDict(uid, data[guid]['users'][uid])
+		for tag in tags:
+			if tag not in user.tags:
+				user.tags.append(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
+
+	await ctx.channel.send(f"Alright, I added {tags} to your tags for {data[guid]['name']}.")
+	return
+
+
+@bot.command()
+async def removeTagsByServer(ctx, guid, *tags):
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	if guid not in data.keys():
+		await ctx.channel.send(f"I don't know of any servers with the ID {guid}.\nUse `+myServers` to get a list of your servers and their ID")
+		return
+	else:
+		user.setFromDict(uid, data[guid]['users'][uid])
+		for tag in tags:
+			if tag in user.tags:
+				user.tags.remove(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
+
+	await ctx.channel.send(f"Alright, I removed {tags} to your tags for {data[guid]['name']}.")
+	return
+
+
+@bot.command()
+async def addComboByServer(ctx, guid, *tags):
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	if guid not in data.keys():
+		await ctx.channel.send(f"I don't know of any servers with the ID {guid}.\nUse `+myServers` to get a list of your servers and their ID")
+		return
+	else:
+		user.setFromDict(uid, data[guid]['users'][uid])
+		user.tagCombos.append(tags)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
+
+	await ctx.channel.send("Alright, I added your new combo list")
+	return
+
+
+@bot.command()
+async def removeComboByServer(ctx, guid, *tags):
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	if guid not in data.keys():
+		await ctx.channel.send(f"I don't know of any servers with the ID {guid}.\nUse `+myServers` to get a list of your servers and their ID")
+		return
+	else:
+		realId = id - 1
+		message = ""
+		if user.tagCombos[realId]:
+			del user.tagCombos[realId]
+			message = "Alright, that tag combo doesn't exist anymore for you."
+		else:
+			message = "Dude, you don't _have_ a tag combo with that id. Double check your id's with +myCombos"
+
+	await ctx.channel.send(message)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
+	return
+
+
+@bot.command()
+async def addBlacklistByServer(ctx, guid, *tags):
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	if guid not in data.keys():
+		await ctx.channel.send(f"I don't know of any servers with the ID {guid}.\nUse `+myServers` to get a list of your servers and their ID")
+		return
+	else:
+		user.setFromDict(uid, data[guid]['users'][uid])
+		user.blacklist.append(tags)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
+
+	await ctx.channel.send(f"Alright, I added {tags} to your blacklist for {data[guid]['name']}")
+	return
+
+
+@bot.command()
+async def removeBlacklistByServer(ctx, guid, *tags):
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	if guid not in data.keys():
+		await ctx.channel.send(f"I don't know of any servers with the ID {guid}.\nUse `+myServers` to get a list of your servers and their ID")
+		return
+	else:
+		user.setFromDict(uid, data[guid]['users'][uid])
+		user.blacklist.remove(tags)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
+
+	await ctx.channel.send(f"Alright, I removed {tags} from your blacklist for {data[guid]['name']} ")
+	return
+
+
+@bot.command()
+async def setNicknameByServer(ctx, guid, nick):
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	if guid not in data.keys():
+		await ctx.channel.send(f"I don't know of any servers with the ID {guid}.\nUse `+myServers` to get a list of your servers and their ID")
+		return
+	else:
+		user.setFromDict(uid, data[guid]['users'][uid])
+		user.name = nick
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
+
+	await ctx.channel.send(f"Alright, I'll call you {nick} in {data[guid]['name']} from now on")
+	return
+
+
+@bot.command()
+async def setPingByServer(ctx, guid, state):
+	ping = True
+	if state in ('yes', 'y', 'true', 't', '1', 'enable', 'on', 'ping', '@'):
+		ping = True
+	elif state in ('no', 'n', 'false', 'f', '0', 'disable', 'off', 'mention'):
+		ping = False
+	else:
+		await ctx.channel.send("Not sure what that means. Use +help setNotify for the list you can use.")
+		return
+
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+	data[guid]['users'][uid]['notify'] = ping
+	message = "Alright, ping for you are now set to " + str(ping)
+	await ctx.channel.send(message)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
+
+
+@bot.command()
+async def setDelayByServer(ctx, guid, delay):
+	if(delay == None):
+		await ctx.channel.send("And how long am I supposed to wait exactly? The command is +changeDelay <seconds>")
+		return
+	if(int(delay) < 0):
+		await ctx.channel.send("How am I supposed to wait for negative seconds? Just say 0 if you want no delay and use +toggleNotify if you don't want to be pinged.")
+		return
+
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	try:
+		data[guid]['users'][uid]['pingDelay'] = int(delay)
+		await ctx.channel.send("Okay, I'll wait at least " + delay + " seconds between each ping for you.")
+		with open(guildsFile, "w") as dataFile:
+			json.dump(data, dataFile, indent=4)
+	except:
+		await ctx.channel.send("I couldn't set your delay, do you even have a tag list? If not, make one first with +tagMe <tag>")
+
+#view information - Just send it as a big message
+
+
+@bot.command()
+async def myInfo(ctx, guid=None):
+	"""
+	This returns ALL of your data for the server. This can be a lot and will always be sent as a DM
+	"""
+	user, data = await processUser(ctx, guid)
+	if user == None or data == None:
+		#there was an issue, break
+		return
+
+	uid = str(ctx.author.id)
+
+	if guid != None:
+		user.setFromDict(uid, data[guid]['users'][uid])
+
+	message = str(user.__str__())
+	await ctx.author.send(message)
+
 
 bot.run(TOKEN)
