@@ -1,33 +1,27 @@
 # Pydrus-Tagger
 Takes a Hydrus server and tags images using SauceNao and its results. Written in Python and can be used for more than just Hydrus.
 
+Important note: I am only intermediate with Python, so there are bound to be bugs here and there especially as new features are added.
+This almost exclusively applies to KiraBot though, so if you don't care about that then you should have no trouble.
+
 Most everything is as simple as importing and calling. By and large though, you'll want to just use the sauceNaoApi::getAllTags method,
 but this is just a small hobby project so do what you want with this. Make a discord bot that pings your friends for them, tags your
 private Hydrus library, it's all up to you.
 
-How to use:
-  you _can_ call it directly with python3 sauceNaoApi.py <url>
-  You'll need to have a .env file that contains all of your API keys because I am _NOT_ giving mine out
-  You can also import from sauceNaoApi if you want
+Usage:
+If you just want to work on tagging your Hydrus files the simplest way is to run HyTagUI.py
+  Launch HyTagUI.py
+  Hit "Initialize" and wait, the more files you have the longer it will take as it is checking all files to see which need tagging. Hydrus is going to be bombarded when this happens and it currently can not be paused during this stage, so don't plan on being able to use Hydrus very much during this time.
+  Once it is done it will let you know you can start. Set the stop limit (default 100) to whatever you want and hit "Run", but know that the base limit for sauceNao is 200. Personally I     recommend 150 as your limit.
+  Hit run. It will begin tagging your images using the tags it finds from GelBooru, DanBooru, Yandex, Twitter, and many more. This WILL slow down Hydrus a little bit, but you can pause the program with the big red "Pause" button.
+  When it's done, or you have paused it, you can hit "Stop" to close the program. This is more of a formality, if you really want you can just close it anyway. Try to use the "stop" button though as it is safer and less likely to cause any possible issues with the file tracking what hashes have been searched/tagged.
   
-Notice:
-  I have written AI, Machine Learning algorithms, multivariate calculus solvers, and auto-pinging Discord bots in Python, so naturally
-  I have not Earthly idea how I have managed to write any of this. If something's busted don't expect any fast fixes. 
+  Hytag.py does effectively the same thing, but it runs through all the files one at a time and will tag new ones as it finds them. This is the faster method, but it is not able to be paused and is a little less intuitive. Look it over or run it with the default of 25 files to get an idea of how it might work for you.
   
-#Kira-Bot
-  If you're just using the discord Kira Bot, you can ignore the HydrusAPI, Pydrus, and tester.
-  You just need to make sure you still have the following in your .env file:
-  Twitter Bearer Token API, SauceNao API Token, Threshold percent (90.0 is a good value), Discord API Key and Token
-  You can also ignore the files HydrusAPI and Pydrus-Tagger in that case
-  Once everything is installed and loaded, just call python3 .\kiraBot.py and let it run. Will update if problems are found, as well
-  as if any improvements come up.
+KiraBot:
+  Kira bot serves as a proof-of-concept for using the various different APIs in other programs. 
+  It can currently:
+  Track of what tags users request to be pinged for and will do so if an image posted to the server is found to have those tags.
+  It can also roll random images from Gelbooru (and Danbooru but that's disabled by default due to API limits) that have specific tags, skipping ones that have tags blacklisted by the server.
+  Roll random elements from a list (A user may ask it to pick three random days of the week for example using "+random [Mon,Tue,Wed,Thur,Fri]")
   
-#Notes
-   Since this uses SauceNao, if too many searches happen at once a problem can occur and no results will return. You also only have
-  6 searches every 30s and 200 every 24hr with a default sauceNao account, but for small servers this shouldn't be an issue.
-  
-#Plans
-  Will consider encrypting certain data in the users.json if security is a concern for people, but for now since tags are mentioned anyway it
-  doesn't make a whole lot of sense.
-  Considering adding a feature where you can turn off tag mentioning, so you'll still get pinged but it won't say why (if you opt for that)
-  Will add a check for twitter API, so if you don't want to sign up for that you can opt to leave it empty
