@@ -1,0 +1,6 @@
+__pycache__/*
+kiraBotFiles/*
+Lib/*
+Scripts/*
+tempFiles/*
+.env
