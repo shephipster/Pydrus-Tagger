@@ -1,11 +1,11 @@
-from ProcessedFilesIO import ProcessedFilesIo
+from Hydrus.ProcessedFilesIO import ProcessedFilesIO
 import sys
-import HydrusApi
-import sauceNaoApi
+import Hydrus.HydrusApi as HydrusApi
+import Services.sauceNaoApi as sauceNaoApi
 import time
 
 logFile = "/tempFiles/logs.txt"
-fio = ProcessedFilesIo()
+fio = ProcessedFilesIO("./tempFiles/processedHashes.txt")
 
 def isValidFile(fileMeta):
     if fileMeta['size'] > sauceNaoApi.FILE_SIZE_LIMIT_IN_BYTES:
