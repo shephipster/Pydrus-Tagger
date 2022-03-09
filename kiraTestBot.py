@@ -8,14 +8,11 @@ import re
 
 from random import choice, choices, randint
 from dotenv import load_dotenv
-from GelbooruService import getRandomPostWithTags
-from Tagger import Tagger
+from Services.GelbooruService import getRandomPostWithTags
+from Utilities.Tagger import Tagger
 
-import TagAPI
-from User import User
-from Post import Post
-from Guild import Guild
-
+import Utilities.TagAPI as TagAPI
+from Entities import User, Post, Guild
 
 from discord.ext import commands
 from PIL import Image
@@ -23,10 +20,12 @@ from scipy.spatial import distance
 
 load_dotenv()
 
-TOKEN = os.getenv('DISCORD_TOKEN')
+#TOKEN = os.getenv('DISCORD_TOKEN')
 #DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
+
 # This is used for debugging
 DISCORD_API_KEY = os.getenv('DISCORD_TEST_API_KEY')
+TOKEN = os.getenv('DISCORD_TEST_TOKEN')
 
 description = ''' Kira bot. Pings users for images that have tags they like. '''
 #Consts
@@ -929,15 +928,16 @@ async def removeBannedExplicitTags(ctx, *tags):
 
 @bot.command()
 async def myServers(ctx):
-	user, data = await processUser(ctx)
-	if user == None or data == None:
-		#there was an issue, break
-		return
 
 	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
+
+	f = open(guildsFile)
+	data = json.load(f)
+	f.close()
+
 	for guild in data:
-		await ctx.channel.send(f"You are in {data[guild]['name']}, ID: {data[guild]['id']}")
+		if uid in data[guild]['users'].keys():
+			await ctx.channel.send(f"You are in {data[guild]['name']}, ID: {data[guild]['id']}")
 	return
 
 

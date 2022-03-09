@@ -4,3 +4,7 @@ Lib/*
 Scripts/*
 tempFiles/*
 .env
+Services/__pycache__
+Entities/__pycache__
+Hydrus/__pycache__
+Utilities/__pycache__

@@ -1,19 +1,15 @@
 import threading
 import tkinter as tk
 from tkinter import ttk
-from ProcessedFilesIO import ProcessedFilesIo
-import sys
-import HydrusApi
-import sauceNaoApi
+from Hydrus.ProcessedFilesIO import ProcessedFilesIO
+import Hydrus.HydrusApi as HydrusApi
+import Services.sauceNaoApi as sauceNaoApi
 import time
 from threading import Thread
 
-fio = ProcessedFilesIo()
+fio = ProcessedFilesIO("./tempFiles/processedHashes.txt")
 
 debug = False
-
-#TODO: Update it so that you declare the number of files to do first, then as it finds new files if it reaches that amount it will automatically stop the search and move on to the tagging
-#This would be optional, dictated by a "full-run" button or something
 
 #GUI
 class App(tk.Tk): 

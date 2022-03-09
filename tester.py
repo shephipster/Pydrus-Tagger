@@ -1,10 +1,3 @@
-import GelbooruService
-import DanbooruService
+import Hydrus.HydrusApi as HydrusApi
 
-post = GelbooruService.getRandomPostWithTags("aisaka_taiga")
-print(post)
-if post['rating'] == '-solo_male':
-    print("THIS DUDE ROLLING PORN")
-# tags = post['tags'].split()
-# for tag in tags:
-#     print(tag)
+print(HydrusApi.getMeta(1))

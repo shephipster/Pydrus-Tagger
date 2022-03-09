@@ -8,14 +8,11 @@ import re
 
 from random import choice, choices, randint
 from dotenv import load_dotenv
-from GelbooruService import getRandomPostWithTags
-from Tagger import Tagger
+from Services.GelbooruService import getRandomPostWithTags
+from Utilities.Tagger import Tagger
 
-import TagAPI
-from User import User
-from Post import Post
-from Guild import Guild
-
+import Utilities.TagAPI as TagAPI
+from Entities import User, Post, Guild
 
 from discord.ext import commands
 from PIL import Image

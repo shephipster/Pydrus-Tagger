@@ -1,12 +1,12 @@
-import HydrusApi
-import sauceNaoApi
+import Hydrus.HydrusApi as HydrusApi
+import Services.sauceNaoApi as sauceNaoApi
 import sys
 import time
 import os
-from Tagger import Tagger
+from Utilities.Tagger import Tagger
 from datetime import datetime
 
-DELAY = 2 #Change to 5 if you are using a free SauceNao account, you may overload your 30s API call limit otherwise
+DELAY = 5 #Change to 5 if you are using a free SauceNao account, you may overload your 30s API call limit otherwise
 
 """
     Takes the given id, pulls the file with that id from Hydrus, gets tags for it using sauceNao, then adds the tags
