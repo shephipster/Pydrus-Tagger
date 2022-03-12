@@ -13,7 +13,6 @@ from Utilities.Tagger import Tagger
 
 import Utilities.TagAPI as TagAPI
 from Entities import User, Post, Guild
-
 from discord.ext import commands
 from PIL import Image
 from scipy.spatial import distance
@@ -49,6 +48,7 @@ guildsFile = './kiraBotFiles/guilds.json'
 
 pic_ext = ['.jpg', '.png', '.gif', '.jpeg', '.bmp']
 ROLL_LIMIT = 10
+
 
 @bot.event
 async def on_ready():
@@ -110,7 +110,7 @@ async def initGuild(ctx):
 	data = json.load(f)
 	f.close()
 
-	guild = Guild(ctx.guild)
+	guild = Guild.Guild(ctx.guild)
 
 	if guildUID not in data.keys():
 		#guild not initialized yet, add it
@@ -138,7 +138,7 @@ async def processUser(ctx, guid=-1):
 	data = json.load(f)
 	f.close()
 
-	user = User(ctx.author.id)
+	user = User.User(ctx.author.id)
 
 	if uid not in data[guid]['users']:
 		data[guid]['users'][uid] = user.__dict__
@@ -471,20 +471,19 @@ async def ping_people(ctx, tag_list):
 		#there was an issue, break
 		return
 
-	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
 
 	for user in data[guid]['users']:
-		tmpUser = User(user)
+		tmpUser = User.User(user)
 		tmpUser.setFromDict(user, data[guid]['users'][user])
 
 		# #Uncomment after debugging
-		# if type(ctx) == discord.message.Message:
-		# 	if ctx.author.id == tmpUser.id:
-		# 		continue
-		# else:
-		# 	if int(tmpUser.id) == ctx.message.author.id:
-		# 		continue
+		if type(ctx) == discord.message.Message:
+			if ctx.author.id == tmpUser.id:
+				continue
+		else:
+			if int(tmpUser.id) == ctx.message.author.id:
+				continue
 
 		if all(bTag not in tag_list for bTag in data[guid]['users'][user]['blacklist']):
 			if (pingTime - tmpUser.lastPing < tmpUser.pingDelay):
@@ -517,7 +516,7 @@ async def ping_people(ctx, tag_list):
 						message += f"`{Tagger.getCleanTag(tag)}`, "
 				for combo in tmpUser.tagCombos:
 					if all(Tagger.getCleanTag(tags) in tag_list for tags in combo):
-						message += f"`{combo}, "
+						message += f"`{combo}`, "
 				message = message[:-2]
 		else:
 			message += f"{loopUser.name}"
@@ -733,7 +732,7 @@ def repostDetected(guild, file):
 	hash = imagehash.phash(image)
 
 	reposted = False
-	latestPost = Post(file, time.time(), str(hash), str(guild))
+	latestPost = Post.Post(file, time.time(), str(hash), str(guild))
 
 	f = open(logFile)
 	data = json.load(f)
@@ -754,7 +753,7 @@ def repostDetected(guild, file):
 	data[len(data)] = latestPost
 
 	with open(logFile, "w") as dataFile:
-		json.dump(data, dataFile, indent=4, default=Post.to_dict)
+		json.dump(data, dataFile, indent=4, default=Post.Post.to_dict)
 	return reposted
 
 
@@ -775,7 +774,7 @@ async def removeMessage(ctx, id):
 
 	guid = str(ctx.guild.id)
 
-	if message.author.id in data[guid]['purgableIds']:
+	if str(message.author.id) in data[guid]['purgableIds']:
 		await message.delete()
 	else:
 		await ctx.channel.send(f"I'm not allowed to delete stuff {message.author.name} posts")
