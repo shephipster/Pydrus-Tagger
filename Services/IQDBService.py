@@ -19,13 +19,17 @@ def getFromUrl(url):
         'url': url
     }
     r = requests.get(URL, params=payload)
-    print(r)
     return r
 
 def refineText(r: requests.Response):
     text = r.text
-    start = text.index('<th>Best match</th>')
-    end = text.index('Not the right one?')
+    start = text.find('<th>Best match</th>')
+
+    if start == -1:
+        #there was no best match, return nothing
+        return None
+
+    end = text.find('Not the right one?')
     refinedText = text[start:end]
     return refinedText
 
@@ -52,6 +56,9 @@ def getUrls(te:str):
 def getUrlsFromUrl(url):
     resp = getFromUrl(url)
     rt = refineText(resp)
+    if rt == None:
+        #It needs to be skipped
+        return None
     bm = bestMatch(rt)
     am = additionalMatches(rt)
     allUrls = getUrls(bm) + getUrls(am)
@@ -60,6 +67,9 @@ def getUrlsFromUrl(url):
 def getUrlsFromFile(file):
     resp = getFromFile(file)
     rt = refineText(resp)
+    if rt == None:
+        #It needs to be skipped
+        return None
     bm = bestMatch(rt)
     am = additionalMatches(rt)
     allUrls = getUrls(bm) + getUrls(am)
@@ -110,6 +120,9 @@ def getBestInfoFromFile(file):
 def getAllInfoFromUrl(url):
     r = getFromUrl(url)
     rt = refineText(r)
+    if rt == None:
+        #It needs to be skipped
+        return None
     best = bestMatch(rt)
     additional = additionalMatches(rt)
     bestTags, bestUrls = getInfo(best)
@@ -124,6 +137,9 @@ def getAllInfoFromUrl(url):
 def getAllInfoFromFile(file):
     r = getFromFile(file)
     rt = refineText(r)
+    if rt == None:
+        #It needs to be skipped
+        return None
     best = bestMatch(rt)
     additional = additionalMatches(rt)
     bestTags, bestUrls = getInfo(best)

@@ -1,12 +1,10 @@
 class ProcessedFilesIO:
     hashes: dict
     file: str
-    id: int
 
     def __init__(self, file):     
         #ensure exists
         self.file = file
-        self.id = 0
         self.hashes = dict()
         ProcessedFilesIO.load(self, file)  
 
@@ -19,17 +17,15 @@ class ProcessedFilesIO:
         for line in file:
             info = line.strip()
             if not info == "":
-                self.hashes[self.id] = info
-                self.id = self.id + 1
+                self.hashes[info] = info
         file.close()
         
     def addHash(self, hashcode):
         if not ProcessedFilesIO.hashInFile(self, hashcode):
-            self.hashes[self.id] = hashcode
-            self.id = self.id + 1
+            self.hashes[hashcode] = hashcode
 
     def save(self):
         with open(self.file, 'w') as file:
             file.seek(0)
             for hash in self.hashes:
-                file.write(f'{hash}\n')
+                file.write(f'{self.hashes[hash]}\n')

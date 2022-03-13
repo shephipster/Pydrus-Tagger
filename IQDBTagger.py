@@ -252,12 +252,15 @@ class Processor(Thread):
             try:
                 if isValidFile(HydrusApi.getMetaFromHash(fileHash)):
                     image = HydrusApi.getImageByHash(fileHash)
-                    data = IQDB.getAllInfoFromFile(image)   
-                    self.processFile(data, fileHash)
+                    data = IQDB.getAllInfoFromFile(image)
+                    if not data == None:  
+                        self.processFile(data, fileHash)
                 else:
                     print(f"Invalid file, hash {fileHash}")
-            # except Exception as e:
-            #     print("Exception:", e)
+            except Exception as e:
+                 print("Exception:", e)
+                 print("Failed hash:", fileHash)
+                 return
             finally:
                 fio.addHash(fileHash)
                 self.filesToHandle.remove(fileHash)            
@@ -284,11 +287,11 @@ class Processor(Thread):
 
 def isValidFile(fileMeta):
     if fileMeta['size'] > IQDB.FILE_LIMIT:
-        print(f"{fileMeta['hash']} too large for IQDB")
+        #print(f"{fileMeta['hash']} too large for IQDB")
         return False
 
     if fileMeta['mime'] not in ["image/png", "image/jpg", "image/jpeg", "image/gif"]:
-        print(f"{fileMeta['hash']} not a valid file type")
+        #print(f"{fileMeta['hash']} not a valid file type")
         return False
 
     return True
