@@ -5,6 +5,7 @@ import os
 URL = "https://iqdb.org"
 FILE_LIMIT = 8192000 #limit is 8192KB
 MAX_DIM = (7500,7500)
+LIKENESS_LIMIT = 80 #result must be at least this % similar to be counted
 
 def getFromFile(file):
     body = { 
@@ -42,16 +43,24 @@ def additionalMatches(rt:str):
     start = rt.find('Additional')
     if start == -1:
         return ""
-    refine = rt[start: rt.index('</table>', start)]
+    end = rt.find('id=\"show1\"')
+    refine = rt[start:end]
     return refine
 
 def getUrls(te:str):
-    spl = re.findall('href=\"[htps:]*//[\w\.]+[/\w\.\?\=\&]+\"', te)
-    for entry in range(len(spl)):
-        spl[entry] = spl[entry][6:-1]
-        if spl[entry][0:2] == '//':
-            spl[entry] = spl[entry][2:]
-    return spl
+    splUrl = re.findall('href=\"[htps:]*//[\w\.-]+[/\w\.\?\=\&]+\"', te)
+    splLikeness = re.findall('\d{1,2}%', te)
+    likenessCount = 0
+    print(splLikeness)
+    urls = list()
+    for entry in range(len(splUrl)):
+        splUrl[entry] = splUrl[entry][6:-1]
+        if splUrl[entry][0:2] == '//':
+            splUrl[entry] = splUrl[entry][2:]
+            if int(splLikeness[likenessCount][:-1]) >= LIKENESS_LIMIT:
+                likenessCount += 1
+                urls.append(splUrl[entry])
+    return urls
 
 def getUrlsFromUrl(url):
     resp = getFromUrl(url)
