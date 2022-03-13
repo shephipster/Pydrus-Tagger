@@ -1181,5 +1181,62 @@ async def myInfo(ctx, guid=None):
 	message = str(user.__str__())
 	await ctx.author.send(message)
 
+@bot.command()
+async def poll(ctx, *options):
+	LIMIT = 10	#this can be extended, you just need to add emojis to the below getters is all
+	message = "Cast your vote using the reactions below!"
+	optionCount = 1
+	if len(options) > LIMIT:
+		await ctx.channel.send("I can only do a poll with up to 10 options")
+		return
+	for option in options:
+		message += "\n" + getNumericEmoji(optionCount % LIMIT) + " " + option
+		optionCount += 1
+	msg = await ctx.channel.send(message)
+
+	#Generate reactions
+	optionCount = 1
+	for option in options:
+		await msg.add_reaction(getNumericReaction(optionCount % LIMIT))
+		optionCount += 1
+	return msg
+
+@bot.command()
+async def timedPoll(ctx, seconds, *options):
+	msg = await poll(ctx, *options)
+	await msg.delete(delay = float(seconds))
+
+def getNumericEmoji(num):
+	switch = {
+		0: ':zero:',
+		1: ':one:',
+		2: ':two:',
+		3: ':three:',
+		4: ':four:',
+		5: ':five:',
+		6: ':six:',
+		7: ':seven:',
+		8: ':eight:',
+		9: ':nine:',
+	}
+	return switch.get(num, ':question:')
+
+
+def getNumericReaction(num):
+	#This is a tad wonky and require the actual emoji (win + . (and not the numpad .) to access)
+	switch = {
+		0: '0️⃣',
+		1: '1️⃣',
+		2: '2️⃣',
+		3: '3️⃣',
+		4: '4️⃣',
+		5: '5️⃣',
+		6: '6️⃣',
+		7: '7️⃣',
+		8: '8️⃣',
+		9: '9️⃣',
+	}
+	return switch.get(num, ':question:')
+
 
 bot.run(TOKEN)
