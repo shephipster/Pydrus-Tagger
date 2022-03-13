@@ -48,19 +48,25 @@ def additionalMatches(rt:str):
     return refine
 
 def getUrls(te:str):
-    splUrl = re.findall('href=\"[htps:]*//[\w\.-]+[/\w\.\?\=\&]+\"', te)
-    splLikeness = re.findall('\d{1,2}%', te)
-    likenessCount = 0
-    print(splLikeness)
+    #Split te into entries
     urls = list()
-    for entry in range(len(splUrl)):
-        splUrl[entry] = splUrl[entry][6:-1]
-        if splUrl[entry][0:2] == '//':
-            splUrl[entry] = splUrl[entry][2:]
-            if int(splLikeness[likenessCount][:-1]) >= LIKENESS_LIMIT:
-                likenessCount += 1
-                urls.append(splUrl[entry])
+    entries = re.findall('match</th>.*similarity', te)
+    for entry in entries:
+        parsedEntry = parseEntry(entry)
+        if parsedEntry['likeness'] > LIKENESS_LIMIT:
+            for url in parsedEntry['urls']:
+                urls.append(url)
     return urls
+
+def parseEntry(entry:str):
+    urls = re.findall('href=\"[htps:]*//[\w\.-]+[/\w\.\?\=\&]+\"', entry)
+    likenessStr = re.findall('\d{1,2}%', entry)[0]
+    likeness = int(likenessStr[:-1])
+    entry = {
+        'urls': urls,
+        'likeness': likeness
+    }
+    return entry
 
 def getUrlsFromUrl(url):
     resp = getFromUrl(url)
