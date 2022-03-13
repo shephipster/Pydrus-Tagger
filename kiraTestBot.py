@@ -33,6 +33,7 @@ postTTL = -1  # how long a post should be recorded before it is up for deletion.
 logSizeLimit = 255
 repostDistance = 10  # how similar an image must be to be a repost. Smaller means more similar, account for Discord compression
 JOKE_MODE = False
+POLL_LIMIT = 10	#maximum number of items allowed in a poll
 
 intents = discord.Intents.default()
 intents.members = True
@@ -1186,33 +1187,55 @@ async def myInfo(ctx, guid=None):
 
 
 @bot.command()
-async def poll(ctx, *options):
-	LIMIT = 10	#this can be extended, you just need to add emojis to the below getters is all
+async def poll(ctx, *options):	
 	message = "Cast your vote using the reactions below!"
 	optionCount = 1
-	if len(options) > LIMIT:
-		await ctx.channel.send("I can only do a poll with up to 10 options")
+	pollMap = dict()
+	if len(options) > POLL_LIMIT:
+		await ctx.channel.send(f"I can only do a poll with up to {POLL_LIMIT} options")
 		return
 	for option in options:
-		message += "\n" + getNumericEmoji(optionCount % LIMIT) + " " + option
+		message += "\n" + getNumericEmoji(optionCount) + " " + option
 		optionCount += 1
 	msg = await ctx.channel.send(message)
 
 	#Generate reactions
 	optionCount = 1
 	for option in options:
-		await msg.add_reaction(getNumericReaction(optionCount % LIMIT))
+		reaction = getNumericReaction(optionCount)
+		await msg.add_reaction(reaction)
+		pollMap[reaction] = option
 		optionCount += 1
-	return msg
+	return msg, pollMap
 
 @bot.command()
 async def timedPoll(ctx, seconds, *options):
-	msg = await poll(ctx, *options)
-	await msg.delete(delay = float(seconds))
+	results = dict()
+	msg: discord.Message
+	msg, pollMap = await poll(ctx, *options)
+	time.sleep(int(seconds))
+	msg = await ctx.channel.fetch_message(msg.id)
+	for reaction in msg.reactions:
+		if reaction.count not in results.keys():
+			results[reaction.count] = [reaction.emoji]
+		else:
+			results[reaction.count].append(reaction.emoji)
+	sortedResults = {key: value for key, value in sorted(results.items(), key=lambda item: item[1], reverse=True)}
+
+	message = "Stop your voting! The results are in and are...\n"
+	ranking = 1
+	for place in sortedResults:
+		message += getNumericEmoji(ranking) + " "
+		ranking += 1
+		for item in sortedResults[place]:
+			message += pollMap[item] + ", "
+		message += f'with {place} votes\n'
+	await msg.clear_reactions()
+	await msg.edit(content=message)
+	return
 
 def getNumericEmoji(num):
 	switch = {
-		0: ':zero:',
 		1: ':one:',
 		2: ':two:',
 		3: ':three:',
@@ -1222,14 +1245,14 @@ def getNumericEmoji(num):
 		7: ':seven:',
 		8: ':eight:',
 		9: ':nine:',
+		10: ':zero:'
 	}
 	return switch.get(num, ':question:')
 
 
 def getNumericReaction(num):
 	#This is a tad wonky and require the actual emoji (win + . (and not the numpad .) to access)
-	switch = {
-		0: '0️⃣',
+	switch = {		
 		1: '1️⃣',
 		2: '2️⃣',
 		3: '3️⃣',
@@ -1239,8 +1262,9 @@ def getNumericReaction(num):
 		7: '7️⃣',
 		8: '8️⃣',
 		9: '9️⃣',
+		10: '0️⃣'
 	}
-	return switch.get(num, ':question:')
+	return switch.get(num, '❓')
 
 
 bot.run(TOKEN)
