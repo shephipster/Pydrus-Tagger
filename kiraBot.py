@@ -99,7 +99,7 @@ async def on_command_error(ctx, error):
 	return
 
 
-@bot.command()
+@bot.command(aliases=['init'])
 async def initGuild(ctx):
 	#for each file, if guild not already part of it add them
 	if type(ctx.channel) == discord.channel.DMChannel:
@@ -149,7 +149,7 @@ async def processUser(ctx, guid=-1):
 	return user, data
 
 
-@bot.command()
+@bot.command(aliases=['tagme', 'addTag', 'addtag'])
 async def tagMe(ctx, *tags):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -167,7 +167,7 @@ async def tagMe(ctx, *tags):
 	return
 
 
-@bot.command()
+@bot.command(aliases=['untag', 'untagme', 'removeTag'])
 async def untagMe(ctx, *tags):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -185,7 +185,7 @@ async def untagMe(ctx, *tags):
 	return
 
 
-@bot.command()
+@bot.command(aliases=[])
 async def blacklist(ctx, *tags):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -202,7 +202,7 @@ async def blacklist(ctx, *tags):
 	await ctx.channel.send("Alright, I update your blacklist for you.")
 
 
-@bot.command()
+@bot.command(aliases=[])
 async def unblacklist(ctx, *tags):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -220,7 +220,7 @@ async def unblacklist(ctx, *tags):
 	await ctx.send(message)
 
 
-@bot.command()
+@bot.command(aliases=[])
 async def myBlacklist(ctx):
 
 	user, data = await processUser(ctx)
@@ -235,7 +235,7 @@ async def myBlacklist(ctx):
 	await ctx.channel.send(response)
 
 
-@bot.command()
+@bot.command(aliases=['nick'])
 async def nickname(ctx, name):
 
 	user, data = await processUser(ctx)
@@ -253,7 +253,7 @@ async def nickname(ctx, name):
 	await ctx.channel.send(confirm)
 
 
-@bot.command()
+@bot.command(aliases=['mytags', 'myTags', 'taglist'])
 async def checkTags(ctx):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -266,12 +266,7 @@ async def checkTags(ctx):
 	await ctx.channel.send(response)
 
 
-@bot.command()
-async def myTags(ctx):
-	await checkTags(ctx)
-
-
-@bot.command()
+@bot.command(aliases=['ping', 'pingMe', 'pingme'])
 async def setPing(ctx, state):
 
 	ping = True
@@ -324,7 +319,7 @@ async def hideTags(ctx, state):
 		json.dump(data, dataFile, indent=4)
 
 
-@bot.command()
+@bot.command(aliases=['pm', 'dm'])
 async def slide(ctx):
 	await ctx.author.send("You wanted something?")
 
@@ -559,7 +554,7 @@ async def checkNotifications(ctx):
 		await ctx.send(f"{userName}, you don't have a tag list yet. Use +tagMe <tag> to start one!")
 
 
-@bot.command()
+@bot.command(aliases=['tags'])
 async def getTagsFor(ctx):
 	""" Gets the tags for a given image """
 	if not ctx.message.attachments:
@@ -575,7 +570,7 @@ async def getTagsFor(ctx):
 			await ctx.channel.send(output[:-2])
 
 
-@bot.command()
+@bot.command(aliases=['delay', 'setdelay', 'setDelay'])
 async def changeDelay(ctx, delay):
 	"""Sets how long to wait between pings. Takes how many seconds to wait before each ping."""
 
@@ -601,11 +596,6 @@ async def changeDelay(ctx, delay):
 			json.dump(data, dataFile, indent=4)
 	except:
 		await ctx.channel.send("I couldn't set your delay, do you even have a tag list? If not, make one first with +tagMe <tag>")
-
-
-@bot.command()
-async def setDelay(ctx, delay):
-	await changeDelay(ctx, delay)
 
 
 @bot.command()
@@ -765,7 +755,7 @@ def postExpired(timePosted: float):
 	return time.time() - timePosted >= postTTL
 
 
-@bot.command()
+@bot.command(aliases=['deleteMessage', 'deletePost', 'deletepost', 'removePost', 'removepost'])
 async def removeMessage(ctx, id):
 	message = await ctx.channel.fetch_message(id)
 
@@ -783,7 +773,7 @@ async def removeMessage(ctx, id):
 	return
 
 
-@bot.command()
+@bot.command(aliases=['canDelete', 'canRemove', 'canPurge'])
 async def addPurgablePoster(ctx, id):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -809,7 +799,7 @@ async def addPurgablePoster(ctx, id):
 		await ctx.channel.send(f"Okay, I can now delete {member.name}'s posts.")
 
 
-@bot.command()
+@bot.command(aliases=['cantDelete', 'cantRemove', 'cantPurge'])
 async def removePurgablePoster(ctx, id):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -835,7 +825,7 @@ async def removePurgablePoster(ctx, id):
 		await ctx.channel.send(f"Okay, I can no longer delete {member.name}'s posts.")
 
 
-@bot.command()
+@bot.command(aliases=['banTag', 'blockTag'])
 async def addBannedGeneralTags(ctx, *tags):
 	if ctx.author.id != ctx.guild.owner_id:
 		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
@@ -858,7 +848,7 @@ async def addBannedGeneralTags(ctx, *tags):
 	await ctx.channel.send(f"Okay, I'll now no longer roll stuff with any of the following: {tags}")
 
 
-@bot.command()
+@bot.command(aliases=['banExplicitTag', 'blockExplicitTag', 'blockPornTag', 'banPornTag'])
 async def addBannedExplicitTags(ctx, *tags):
 	if ctx.author.id != ctx.guild.owner_id:
 		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
@@ -881,7 +871,7 @@ async def addBannedExplicitTags(ctx, *tags):
 	await ctx.channel.send(f"Okay, I'll now no longer roll explicit stuff with any of the following: {tags}")
 
 
-@bot.command()
+@bot.command(aliases=['unbanExplicitTag', 'unblockExplicitTag', 'unblockPornTag', 'unbanPornTag'])
 async def removeBannedGeneralTags(ctx, *tags):
 	if ctx.author.id != ctx.guild.owner_id:
 		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
@@ -904,7 +894,7 @@ async def removeBannedGeneralTags(ctx, *tags):
 	await ctx.channel.send(f"Okay, I can now roll stuff with any of the following: {tags}")
 
 
-@bot.command()
+@bot.command(aliases=['unblockTag', 'unbanTag'])
 async def removeBannedExplicitTags(ctx, *tags):
 	if ctx.author.id != ctx.guild.owner_id:
 		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
@@ -927,7 +917,7 @@ async def removeBannedExplicitTags(ctx, *tags):
 	await ctx.channel.send(f"Okay, I can now roll explicit stuff with any of the following: {tags}")
 
 
-@bot.command()
+@bot.command(aliases=['servers', 'guilds', 'myGuilds'])
 async def myServers(ctx):
 
 	uid = str(ctx.author.id)
@@ -1168,7 +1158,7 @@ async def setDelayByServer(ctx, guid, delay):
 #view information - Just send it as a big message
 
 
-@bot.command()
+@bot.command(aliases=['info', 'myStuff'])
 async def myInfo(ctx, guid=None):
 	"""
 	This returns ALL of your data for the server. This can be a lot and will always be sent as a DM
@@ -1188,7 +1178,7 @@ async def myInfo(ctx, guid=None):
 
 
 @bot.command()
-async def poll(ctx, *options):	
+async def poll(ctx, *options):
 	message = "Cast your vote using the reactions below!"
 	optionCount = 1
 	pollMap = dict()
@@ -1209,8 +1199,16 @@ async def poll(ctx, *options):
 		optionCount += 1
 	return msg, pollMap
 
-@bot.command()
+
+@bot.command(aliases=['timedpoll', 'timepoll', 'limitpoll', 'limitedpoll'])
 async def timedPoll(ctx, seconds, *options):
+
+	try:
+		int(seconds)
+	except:
+		await ctx.channel.send("You need to give me the time first then your options")
+		return
+
 	results = dict()
 	msg: discord.Message
 	msg, pollMap = await poll(ctx, *options)
@@ -1221,7 +1219,8 @@ async def timedPoll(ctx, seconds, *options):
 			results[reaction.count] = [reaction.emoji]
 		else:
 			results[reaction.count].append(reaction.emoji)
-	sortedResults = {key: value for key, value in sorted(results.items(), key=lambda item: item[0], reverse=True)}
+	sortedResults = {key: value for key, value in sorted(
+		results.items(), key=lambda item: item[0], reverse=True)}
 
 	message = "Stop your voting! The results are in and are...\n"
 	ranking = 1
@@ -1234,6 +1233,7 @@ async def timedPoll(ctx, seconds, *options):
 	await msg.clear_reactions()
 	await msg.edit(content=message)
 	return
+
 
 def getNumericEmoji(num):
 	switch = {
@@ -1253,7 +1253,7 @@ def getNumericEmoji(num):
 
 def getNumericReaction(num):
 	#This is a tad wonky and require the actual emoji (win + . (and not the numpad .) to access)
-	switch = {		
+	switch = {
 		1: '1️⃣',
 		2: '2️⃣',
 		3: '3️⃣',
