@@ -7,11 +7,15 @@ load_dotenv()
 #This is assuming that Hydrus is running on the same machine
 HYDRUS_URL = os.getenv("HYDRUS_URL")
 HYDRUS_KEY = os.getenv('HYDRUS_API_KEY')
+#4096 caused errors, but 1024 seems to be acceptable.
+#Lower it if you have problems until the connection stops dropping
+PAGE_SIZE = 1024     
 
 header = {
     'Hydrus-Client-API-Access-Key': HYDRUS_KEY,
-    'User-Agent' : "Pydrus-Client/1.0.0"
+    'User-Agent': "Pydrus-Client/1.0.0"
 }
+
 
 def getAllFileIds():
     url = HYDRUS_URL + f"get_files/search_files?"
@@ -19,12 +23,47 @@ def getAllFileIds():
     ids = res.json()['file_ids']
     return sorted(ids)
 
+
 def getAllFileHashes():
     ids = getAllFileIds()
-    hashes = []
-    for id in ids:
-        hash = getMeta(id)['hash']
-        hashes.append(hash)
+    pagedIds = list()
+    hashes = dict()
+    length = len(ids)
+    count = 0    
+
+    for i in range(0, length, PAGE_SIZE):
+        pagedIds.append(ids[i:i+PAGE_SIZE])    
+    
+    for page in pagedIds:
+        meta = getMetaData(*page).json()['metadata']
+        for entry in meta:
+            hashes[count] = entry['hash']
+            count = count + 1
+    return hashes
+
+def getAllMainFileData():
+    ids = getAllFileIds()
+    pagedIds = list()
+    data = dict()
+    length = len(ids)
+    count = 0    
+
+    for i in range(0, length, PAGE_SIZE):
+        pagedIds.append(ids[i:i+PAGE_SIZE])    
+    
+    for page in pagedIds:
+        meta = getMetaData(*page).json()['metadata']
+        for entry in meta:
+            data[count] = {
+                'file_id': entry['file_id'],
+                "hash": entry['hash'],
+                "size": entry['size'],
+                "width": entry['width'],
+                "height": entry['height'],
+                "mime": entry['mime']
+            }
+            count = count + 1
+    return data
 
 
 def getPage(start, range):
@@ -32,16 +71,20 @@ def getPage(start, range):
     page = list(filter(lambda id: id >= start, allIds))[:range]
     return page
 
+
 def getNextPageStart(lastPage):
     return getPage(lastPage[-1], 2)[-1]
+
 
 def getReversePage(start, range):
     allIds = getAllFileIds()
     page = list(filter(lambda id: id > start, allIds))[:range]
     return page
 
+
 def getReverseNextPageStart(lastPage):
     return getReversePage(lastPage[0], 2)[-1]
+
 
 def getLastId():
     url = HYDRUS_URL + f"get_files/search_files?tags=[\"system:limit=1\"]"
@@ -51,6 +94,8 @@ def getLastId():
     return id
 
 #Loads in the file and then saves it to a temp file. Returns the temp file
+
+
 def getImageById(id):
 
     #commented out to save on API calls to Hydrus, P-Tagger handles this check
@@ -76,6 +121,7 @@ def getImageById(id):
             tmp.write(chunk)
     return fileName
 
+
 def getFileType(contentType):
     switcher = {
         'image/jpeg': '.jpg',
@@ -83,7 +129,7 @@ def getFileType(contentType):
         'image/png': '.png',
         'image/tiff': '.tiff',
 
-        'application/zip':'.zip',
+        'application/zip': '.zip',
 
         'video/mpeg': '.mpeg',
         'video/mp4': '.mp4',
@@ -92,6 +138,7 @@ def getFileType(contentType):
         'text/html': '.html'
     }
     return switcher.get(contentType)
+
 
 """ Returns the metadata of the file.
     Key values are: file_id, hash, size, mime, ext, width, height, 
@@ -125,25 +172,30 @@ def getFileType(contentType):
         technically it takes a list, so need to use %5B for [,
         %5D for ], and %5C for ','
 """
+
+
 def getMetaData(*ids):
     encodedIds = "%5B"
     for id in ids:
         encodedIds += str(id) + "%2C"
     encodedIds = encodedIds[:-3] + "%5D"
 
-    url = HYDRUS_URL + "get_files/file_metadata?file_ids=" + encodedIds + "&detailed_url_information=true"
+    url = HYDRUS_URL + "get_files/file_metadata?file_ids=" + \
+        encodedIds + "&detailed_url_information=true"
 
     res = requests.get(url, headers=header)
     return res
+
 
 def getMeta(id):
     data = getMetaData(id)
     jsonData = data.json()
     meta = jsonData['metadata'][0]
     return meta
-    
 
 """0- current, 1- pending, 2- deleted, 3-petitioned"""
+
+
 def getTags(id):
     meta = getMeta(id)
     service_names_to_statuses_to_tags = meta['service_names_to_statuses_to_tags']['all known tags']
@@ -154,12 +206,16 @@ def getTags(id):
         tags = service_names_to_statuses_to_tags['2']
     return tags
 
+
 def getUrls(id):
     meta = getMeta(id)
     known_urls = meta['known_urls']
     return known_urls
 
+
 """ Tags the tags and adds them to the local tag service"""
+
+
 def addTags(id, *tags):
     hash = getMeta(id)['hash']
     url = HYDRUS_URL + "add_tags/add_tags"
@@ -190,6 +246,7 @@ def addTags(id, *tags):
     res = requests.post(url, json=body, headers=header)
     return res
 
+
 def addTagByHash(hash, tag):
     url = HYDRUS_URL + "add_tags/add_tags"
     tagList = [tag]
@@ -202,6 +259,7 @@ def addTagByHash(hash, tag):
     }
     res = requests.post(url, json=body, headers=header)
     return res
+
 
 def addKnownURLToFile(id, url):
     hash = getMeta(id)['hash']
@@ -216,6 +274,7 @@ def addKnownURLToFile(id, url):
     res = requests.post(targetUrl, json=payload, headers=header)
     return res
 
+
 def addKnownURLToFileByHash(hash, url):
     #Having to guess, but think known urls fall under tags
     targetUrl = HYDRUS_URL + "add_urls/associate_url"
@@ -228,7 +287,8 @@ def addKnownURLToFileByHash(hash, url):
     res = requests.post(targetUrl, json=payload, headers=header)
     return res
 
-def uploadURL(url, title = "Pydrus"):
+
+def uploadURL(url, title="Pydrus"):
     """ Uploads a URL to Hydrus to let installed parsers do the work """
     hydrus_url = HYDRUS_URL + "add_urls/add_url"
     body = {
@@ -238,6 +298,7 @@ def uploadURL(url, title = "Pydrus"):
 
     res = requests.post(hydrus_url, json=body, headers=header)
     return res
+
 
 def addTag(id, tag):
     hash = getMeta(id)['hash']
@@ -253,15 +314,18 @@ def addTag(id, tag):
     res = requests.post(url, json=body, headers=header)
     return res
 
+
 """ Deletes a tag and adds the new one
     Mostly useful for tag 'cleaning', removing
     hashtags from Twitter and percent-encoded tags
     This does NOT push tags to PTR
 """
+
+
 def updateTag(id, oldTag, newTag):
 
     if oldTag == newTag:
-        return #same thing, why bother
+        return  # same thing, why bother
 
     hash = getMeta(id)['hash']
     url = HYDRUS_URL + "add_tags/add_tags"
@@ -276,12 +340,14 @@ def updateTag(id, oldTag, newTag):
     }
     return
 
+
 def fileExists(id):
     res = getMetaData(id)
     if res.status_code != 200:
         return False
     else:
         return True
+
 
 def getImageByHash(hash):
 
@@ -307,3 +373,14 @@ def getImageByHash(hash):
         for chunk in res.iter_content(128):
             tmp.write(chunk)
     return fileName
+
+
+def getMetaFromHash(hash):
+    url = HYDRUS_URL + "get_files/file_metadata?hashes=%5B%22" + hash + "%22%5D&detailed_url_information=true"
+    res = requests.get(url, headers=header)
+
+    if(res.headers['Content-Type'] == "text/html"):
+        if (res.headers['Content-Length'] == '44' or res.headers['Content-Length'] == '25'):
+            return None
+
+    return res.json()['metadata'][0]

@@ -8,3 +8,5 @@ Services/__pycache__
 Entities/__pycache__
 Hydrus/__pycache__
 Utilities/__pycache__
+kiraTestBot.py
+tester.py

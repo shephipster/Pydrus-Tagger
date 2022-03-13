@@ -7,7 +7,7 @@ import Services.sauceNaoApi as sauceNaoApi
 import time
 from threading import Thread
 
-fio = ProcessedFilesIO("./tempFiles/processedHashes.txt")
+fio = ProcessedFilesIO("./tempFiles/processedSauceNaoHashes.txt")
 
 debug = False
 
@@ -215,13 +215,16 @@ class FileFinder(Thread):
 
     def run(self):
         #for all files
-        ids = HydrusApi.getAllFileIds()
-        for id in ids:
+        #Why in the world was I using the id and making more calls for the hash?
+        fileData = HydrusApi.getAllMainFileData()
+        for key in fileData.keys():
             self.numFiles += 1
-            fileMeta = HydrusApi.getMeta(id)
-            fileHash = fileMeta['hash']
-            if not fio.hashInFile(fileHash):
-                self.newFiles.append(fileHash)        
+            if not fio.hashInFile(fileData[key]['hash']):
+                if isValidFile(fileData[key]):
+                    self.newFiles.append(fileData[key]['hash'])
+                else:
+                    fio.addHash(fileData[key]['hash'])
+        fio.save()
 
 #Handles the actual processing of the files and tagging them
 class Processor(Thread):

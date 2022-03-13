@@ -1,3 +1,5 @@
+import Hydrus
 import Hydrus.HydrusApi as HydrusApi
 
-print(HydrusApi.getMeta(1))
+data = HydrusApi.getAllMainFileData()
+print(data.keys())

@@ -1,32 +1,31 @@
-import bisect
-import os
 class ProcessedFilesIO:
-    hashes = list()
+    hashes: dict
     file: str
 
     def __init__(self, file):     
         #ensure exists
         self.file = file
-        ProcessedFilesIO.load(file)  
+        self.hashes = dict()
+        ProcessedFilesIO.load(self, file)  
 
     def hashInFile(self, hashcode):
         """ For now we'll just assume the system has the space to keep all ids in memory"""
-        return hashcode in ProcessedFilesIO.hashes
+        return hashcode in self.hashes.keys()
 
-    def load(file):
+    def load(self, file):
         file = open(file, 'r')
         for line in file:
             info = line.strip()
             if not info == "":
-                bisect.insort(ProcessedFilesIO.hashes, info)
+                self.hashes[info] = info
         file.close()
         
     def addHash(self, hashcode):
         if not ProcessedFilesIO.hashInFile(self, hashcode):
-            bisect.insort(ProcessedFilesIO.hashes, hashcode)
+            self.hashes[hashcode] = hashcode
 
     def save(self):
         with open(self.file, 'w') as file:
             file.seek(0)
-            for hash in ProcessedFilesIO.hashes:
-                file.write(f'{hash}\n')
+            for hash in self.hashes:
+                file.write(f'{self.hashes[hash]}\n')

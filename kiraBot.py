@@ -470,7 +470,6 @@ async def ping_people(ctx, tag_list):
 		#there was an issue, break
 		return
 
-	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
 
 	for user in data[guid]['users']:
@@ -516,7 +515,7 @@ async def ping_people(ctx, tag_list):
 						message += f"`{Tagger.getCleanTag(tag)}`, "
 				for combo in tmpUser.tagCombos:
 					if all(Tagger.getCleanTag(tags) in tag_list for tags in combo):
-						message += f"`{combo}, "
+						message += f"`{combo}`, "
 				message = message[:-2]
 		else:
 			message += f"{loopUser.name}"
