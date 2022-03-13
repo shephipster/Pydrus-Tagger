@@ -252,7 +252,7 @@ class Processor(Thread):
             try:
                 if isValidFile(HydrusApi.getMetaFromHash(fileHash)):
                     image = HydrusApi.getImageByHash(fileHash)
-                    data = IQDB.getAllInfoFromFile(image)
+                    data = IQDB.getInfo(image)
                     if not data == None:  
                         self.processFile(data, fileHash)
                 else:
@@ -277,6 +277,7 @@ class Processor(Thread):
     def processFile(self, data, hash):
         tags = data['tags']
         urls = data['urls']
+        print(hash, tags, urls)
         for url in urls:
             HydrusApi.addKnownURLToFileByHash(hash, url)
             HydrusApi.uploadURL(url)
