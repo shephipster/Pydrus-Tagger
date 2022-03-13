@@ -1220,7 +1220,7 @@ async def timedPoll(ctx, seconds, *options):
 			results[reaction.count] = [reaction.emoji]
 		else:
 			results[reaction.count].append(reaction.emoji)
-	sortedResults = {key: value for key, value in sorted(results.items(), key=lambda item: item[1], reverse=True)}
+	sortedResults = {key: value for key, value in sorted(results.items(), key=lambda item: item[0], reverse=True)}
 
 	message = "Stop your voting! The results are in and are...\n"
 	ranking = 1
@@ -1229,7 +1229,7 @@ async def timedPoll(ctx, seconds, *options):
 		ranking += 1
 		for item in sortedResults[place]:
 			message += pollMap[item] + ", "
-		message += f'with {place} votes\n'
+		message += f'with {int(place)-1} votes\n'
 	await msg.clear_reactions()
 	await msg.edit(content=message)
 	return
