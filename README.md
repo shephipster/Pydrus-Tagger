@@ -17,9 +17,9 @@ If you just want to work on tagging your Hydrus files the simplest way is to run
   needWork.txt doesn't actually have much use and can be deleted.
 
   (Make sure you have a processedHashes.txt file, even if it's blank)
-  Launch HyTagUI.py
-  Hit "Initialize" and wait, the more files you have the longer it will take as it is checking all files to see which need tagging. Hydrus is going to be bombarded when this happens and it currently can not be paused during this stage, so don't plan on being able to use Hydrus very much during this time. At around 55,000 files it takes me up to 15 minutes to initialize. Don't worry, optimization will be coming at some point.
-  Once it is done it will let you know you can start. Set the stop limit (default 100) to whatever you want and hit "Run", but know that the base limit for sauceNao is 200. Personally I recommend 150 as your limit.
+  Launch IQDBTagger.py
+  Hit "Initialize" and wait, the more files you have the longer it will take as it is checking all files to see which need tagging. Hydrus is going to be bombarded when this happens and it currently can not be paused during this stage, so don't plan on being able to use Hydrus very much during this time. At around 55,000 files it takes me up to four (4) minutes to initialize. HyTagUI is not optimized yet and takes around 15 minutes to initialize 55,000 files.
+  Once it is done it will let you know you can start. Set the stop limit (default 100) to whatever you want and hit "Run". If using HyTagUi you might want to leave this at 100 or 150 on account of the sauceNao api limits (if you have an upgraded account you can crank it up).
   Hit run. It will begin tagging your images using the tags it finds from GelBooru, DanBooru, Yandex, Twitter, and many more. This WILL slow down Hydrus a little bit, but you can pause the program with the big red "Pause" button.
   When it's done, or you have paused it, you can hit "Stop" to close the program. This is more of a formality, if you really want you can just close it anyway. Try to use the "stop" button though as it is safer and less likely to cause any possible issues with the file tracking what hashes have been searched/tagged.
   
