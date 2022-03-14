@@ -260,8 +260,8 @@ class Processor(Thread):
             except Exception as e:
                  print("Exception:", e)
                  print("Failed hash:", fileHash)
-                 return
-            finally:
+                 print(f'{fileHash}\n', file = open('tempFiles/failedHashes.txt', 'a', encoding='utf-8'))
+            finally:    
                 fio.addHash(fileHash)
                 self.filesToHandle.remove(fileHash)            
                 self.count += 1
@@ -277,10 +277,11 @@ class Processor(Thread):
     def processFile(self, data, hash):
         tags = data['tags']
         urls = data['urls']
-        print(hash, tags, urls)
         for url in urls:
+            if not url.startswith("http://") and not url.startswith("https://"):
+                url = "http://" + url
             HydrusApi.addKnownURLToFileByHash(hash, url)
-            HydrusApi.uploadURL(url)
+            HydrusApi.uploadURL(str(url), title="PyQDB")
         for tag in tags:
             HydrusApi.addTagByHash(hash, tag)
 
