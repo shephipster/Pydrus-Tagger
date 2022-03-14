@@ -5,6 +5,7 @@ import os
 URL = "https://iqdb.org"
 FILE_LIMIT = 8192000 #limit is 8192KB
 MAX_DIM = (7500,7500)
+LIKENESS_LIMIT = 80 #result must be at least this % similar to be counted
 
 def getFromFile(file):
     body = { 
@@ -33,49 +34,7 @@ def refineText(r: requests.Response):
     refinedText = text[start:end]
     return refinedText
 
-def bestMatch(rt:str):
-    refine = rt[rt.index('<a href='): rt.index('</table>')]
-    return refine
-
-def additionalMatches(rt:str):
-    #There might not be any additional matches
-    start = rt.find('Additional')
-    if start == -1:
-        return ""
-    refine = rt[start: rt.index('</table>', start)]
-    return refine
-
-def getUrls(te:str):
-    spl = re.findall('href=\"[htps:]*//[\w\.]+[/\w\.\?\=\&]+\"', te)
-    for entry in range(len(spl)):
-        spl[entry] = spl[entry][6:-1]
-        if spl[entry][0:2] == '//':
-            spl[entry] = spl[entry][2:]
-    return spl
-
-def getUrlsFromUrl(url):
-    resp = getFromUrl(url)
-    rt = refineText(resp)
-    if rt == None:
-        #It needs to be skipped
-        return None
-    bm = bestMatch(rt)
-    am = additionalMatches(rt)
-    allUrls = getUrls(bm) + getUrls(am)
-    return allUrls
-
-def getUrlsFromFile(file):
-    resp = getFromFile(file)
-    rt = refineText(resp)
-    if rt == None:
-        #It needs to be skipped
-        return None
-    bm = bestMatch(rt)
-    am = additionalMatches(rt)
-    allUrls = getUrls(bm) + getUrls(am)
-    return allUrls
-
-def getInfo(refined: str):
+def getTags(refined: str):
     dataRegex = "title=\"Rating: \w [Score: \d* Tags:[\w\s\(\)\:]*\""
     ratingRegex = "Rating: \w"
     tagsRegex = "Tags: [\w\d _\(\)\:]*"
@@ -97,57 +56,45 @@ def getInfo(refined: str):
         tagList.append('rating: safe')
     else:
         tagList.append('rating: questionable')
-    
 
-    urls = getUrls(refined)
+    return tagList
 
-    return tagList, urls
+def getUrls(te:str):
+    #Split te into entries
+    urls = list()
+    entries = re.findall('match</th>.*similarity', te)
+    for entry in entries:
+        parsedEntry = parseEntry(entry)
+        if parsedEntry['likeness'] > LIKENESS_LIMIT:
+            for url in parsedEntry['urls']:
+                urls.append(url)
+    return urls
 
-def getBestInfoFromUrl(url):
-    r = getFromUrl(url)
-    rt = refineText(r)
-    best = bestMatch(rt)
-    bestTags, bestUrls = getInfo(best)
-    return bestTags, bestUrls
+def parseEntry(entry:str):
+    urls = re.findall('href=\"[htps:]*//[\w\.-]+[/\w\.\?\=\&]+\"', entry)
+    for i in range(len(urls)):
+        urls[i] = urls[i][6:-1]
+        if urls[i][0:2] == "//":
+            urls[i] = urls[i][2:]
+    likenessStr = re.findall('\d{1,2}%', entry)[0]
+    likeness = int(likenessStr[:-1])
+    entry = {
+        'urls': urls,
+        'likeness': likeness
+    }
+    return entry
 
-def getBestInfoFromFile(file):
+def getInfo(file):
+    #urls
     r = getFromFile(file)
-    rt = refineText(r)
-    best = bestMatch(rt)
-    bestTags, bestUrls = getInfo(best)
-    return bestTags, bestUrls
-
-def getAllInfoFromUrl(url):
-    r = getFromUrl(url)
-    rt = refineText(r)
+    rt = refineText(r)    
     if rt == None:
         #It needs to be skipped
         return None
-    best = bestMatch(rt)
-    additional = additionalMatches(rt)
-    bestTags, bestUrls = getInfo(best)
-    addTags, addUrls = getInfo(additional)
-    allTags = bestTags + addTags
-    allUrls = bestUrls + addUrls
+
+    allUrls = getUrls(rt)
+    allTags = getTags(rt)
     return {
         'tags': allTags,
         'urls': allUrls
     }
-
-def getAllInfoFromFile(file):
-    r = getFromFile(file)
-    rt = refineText(r)
-    if rt == None:
-        #It needs to be skipped
-        return None
-    best = bestMatch(rt)
-    additional = additionalMatches(rt)
-    bestTags, bestUrls = getInfo(best)
-    addTags, addUrls = getInfo(additional)
-    allTags = bestTags + addTags
-    allUrls = bestUrls + addUrls
-    return {
-        'tags': allTags,
-        'urls': allUrls
-    }
- 
