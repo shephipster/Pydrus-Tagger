@@ -16,6 +16,7 @@ from Entities import User, Post, Guild
 from discord.ext import commands
 from PIL import Image
 from scipy.spatial import distance
+import Services.IQDBService as IQDB
 
 load_dotenv()
 
