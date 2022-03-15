@@ -98,3 +98,16 @@ def getInfo(file):
         'tags': allTags,
         'urls': allUrls
     }
+
+def getInfoUrl(url):
+    r = getFromUrl(url)
+    rt = refineText(r)
+    if rt == None:
+        return None
+
+    allUrls = getUrls(rt)
+    allTags = getTags(rt)
+    return {
+        'tags': allTags,
+        'urls': allUrls
+    }

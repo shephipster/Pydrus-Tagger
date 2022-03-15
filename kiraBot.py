@@ -86,7 +86,8 @@ async def on_message(message):
 	if message.attachments and (len(message.content) == 0 or message.content[0] != '+'):
 		for attachment in message.attachments:
 			imageLink = attachment.url
-			tag_list = sauceNaoLookup(imageLink)
+			data = IQDB.getInfoUrl(imageLink)
+			tag_list = data['tags']
 			await ping_people(message, tag_list)
 			if repostDetected(message.channel.guild, imageLink):
 				await message.add_reaction(str('♻️'))
@@ -562,7 +563,8 @@ async def getTagsFor(ctx):
 	else:
 		for attachment in ctx.message.attachments:
 			imageLink = attachment.url
-			tag_list = sauceNaoLookup(imageLink)
+			data = IQDB.getInfoUrl(imageLink)
+			tag_list = data['tags']
 			output = "The tag list for that image is: "
 			for tag in tag_list:
 				output = output + tag + ", "
