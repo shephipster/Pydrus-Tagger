@@ -1,5 +1,5 @@
 class Post:
-	url=""
+	urls=""	#this is either a url to some place (e.g Twitter) or a discord file link
 	timePosted=0
 	phash=""
 	guild=""
@@ -15,6 +15,6 @@ class Post:
 
 	def to_dict(p):
 		if isinstance(p, Post):
-			return {"url": p.url, "timePosted": p.timePosted, "phash": p.phash, "guild": p.guild}
+			return {"url": p.url, "timePosted": p.timePosted, "phash": p.phash, "guild": p.guild,}
 		else:
 			raise TypeError("Unexpected type {0}".format(p.__class__.__name__))

@@ -16,6 +16,7 @@ from Entities import User, Post, Guild
 from discord.ext import commands
 from PIL import Image
 from scipy.spatial import distance
+import Services.IQDBService as IQDB
 
 load_dotenv()
 
@@ -34,7 +35,7 @@ postTTL = -1  # how long a post should be recorded before it is up for deletion.
 logSizeLimit = 255
 repostDistance = 10  # how similar an image must be to be a repost. Smaller means more similar, account for Discord compression
 JOKE_MODE = False
-POLL_LIMIT = 10	#maximum number of items allowed in a poll
+POLL_LIMIT = 10  # maximum number of items allowed in a poll
 
 intents = discord.Intents.default()
 intents.members = True
@@ -83,13 +84,25 @@ async def on_message(message):
 	elif "fuck me" in message.content.lower():
 		await channel.send("that's kinda gross dude")
 
-	if message.attachments and (len(message.content) == 0 or message.content[0] != '+'):
-		for attachment in message.attachments:
-			imageLink = attachment.url
-			tag_list = sauceNaoLookup(imageLink)
-			await ping_people(message, tag_list)
-			if repostDetected(message.channel.guild, imageLink):
-				await message.add_reaction(str('♻️'))
+	if message.content[0] != '+':
+		if message.attachments:
+			for attachment in message.attachments:
+				print("Attachment:", attachment)
+				imageLink = attachment.url
+				data = IQDB.getInfoUrl(imageLink)
+				tag_list = data['tags']
+				await ping_people(message, tag_list)
+				if repostDetected(message.channel.guild, imageLink):
+					await message.add_reaction(str('♻️'))
+		elif message.embeds:
+			for embed in message.embeds:
+				print("Embed:", embed)
+				imageLink = embed.url
+				data = IQDB.getInfoUrl(imageLink)
+				tag_list = data['tags']
+				await ping_people(message, tag_list)
+				if repostDetected(message.channel.guild, imageLink):
+					await message.add_reaction(str('♻️'))
 	await bot.process_commands(message)
 
 
@@ -144,6 +157,8 @@ async def processUser(ctx, guid=-1):
 
 	if uid not in data[guid]['users']:
 		data[guid]['users'][uid] = user.__dict__
+		with open(guildsFile, 'w') as dataFile:
+			json.dump(data, dataFile, indent=4)
 
 	user.setFromDict(uid, data[guid]['users'][uid])
 	return user, data
@@ -491,11 +506,11 @@ async def ping_people(ctx, tag_list):
 					if realTag in tmpUser.tags and tmpUser not in loggedUsers:
 						data[guid]['users'][tmpUser.id]['lastPing'] = pingTime
 						loggedUsers.append(tmpUser)
-					else:
-						for combo in tmpUser.tagCombos:
-							if all(Tagger.getCleanTag(tags) in tag_list for tags in combo) and tmpUser not in loggedUsers:
-								data[guid]['users'][tmpUser.id]['lastPing'] = pingTime
-								loggedUsers.append(tmpUser)
+					# else:
+						# for combo in tmpUser.tagCombos:
+						# 	if all(Tagger.getCleanTag(tags) in tag_list for tags in combo) and tmpUser not in loggedUsers:
+						# 		data[guid]['users'][tmpUser.id]['lastPing'] = pingTime
+						# 		loggedUsers.append(tmpUser)
 		else:
 			continue
 
@@ -511,10 +526,10 @@ async def ping_people(ctx, tag_list):
 				for tag in tag_list:
 					if tag in loopUser.tags:
 						message += f"`{Tagger.getCleanTag(tag)}`, "
-				for combo in tmpUser.tagCombos:
-					if all(Tagger.getCleanTag(tags) in tag_list for tags in combo):
-						message += f"`{combo}`, "
-				message = message[:-2]
+				# for combo in tmpUser.tagCombos:
+				# 	if all(Tagger.getCleanTag(tags) in tag_list for tags in combo):
+				# 		message += f"`{combo}`, "
+				# message = message[:-2]
 		else:
 			message += f"{loopUser.name}"
 			if loopUser.specifyTags:
@@ -522,10 +537,10 @@ async def ping_people(ctx, tag_list):
 				for tag in tag_list:
 					if tag in loopUser.tags:
 						message += f"`{Tagger.getCleanTag(tag)}`, "
-				for combo in tmpUser.tagCombos:
-					if all(Tagger.getCleanTag(tags) in tag_list for tags in combo):
-						message += f"`{combo}`, "
-				message = message[:-2]
+				# for combo in tmpUser.tagCombos:
+				# 	if all(Tagger.getCleanTag(tags) in tag_list for tags in combo):
+				# 		message += f"`{combo}`, "
+				# message = message[:-2]
 
 	if message != "":
 		await ctx.channel.send(message)
@@ -562,7 +577,8 @@ async def getTagsFor(ctx):
 	else:
 		for attachment in ctx.message.attachments:
 			imageLink = attachment.url
-			tag_list = sauceNaoLookup(imageLink)
+			data = IQDB.getInfoUrl(imageLink)
+			tag_list = data['tags']
 			output = "The tag list for that image is: "
 			for tag in tag_list:
 				output = output + tag + ", "
@@ -617,7 +633,7 @@ async def roll(ctx, regex):
 		await ctx.channel.send(message)
 
 
-@bot.command()
+@bot.command(aliases=['randomPic', 'randomPicture', 'randomContent'])
 async def randomPost(ctx, *tags):
 	roll = True
 	num_rolls = 0
@@ -627,7 +643,6 @@ async def randomPost(ctx, *tags):
 		#there was an issue, break
 		return
 
-	uid = str(ctx.author.id)
 	guid = str(ctx.guild.id)
 
 	while roll:
@@ -665,7 +680,7 @@ async def randomPost(ctx, *tags):
 		await ctx.channel.send(f"{poster} just rolled porn!", tts=True)
 
 	await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
-	if isExplicit:
+	if isExplicit and not ctx.channel.is_nsfw():
 		await ctx.channel.send("|| " + image + " ||")
 	else:
 		await ctx.channel.send(image)
@@ -674,6 +689,18 @@ async def randomPost(ctx, *tags):
 	await ping_people(ctx, tag_list)
 
 	return
+
+#TODO: If they use this they
+
+
+@bot.command(aliases=['randomPorn', 'randomExplicit'])
+async def randomNSFW(ctx, *tags):
+	await randomPost(ctx, 'rating:explicit', *tags)
+
+
+@bot.command(aliases=['randomSFW', 'randomClean'])
+async def randomSafe(ctx, *tags):
+	await randomPost(ctx, 'rating:safe', *tags)
 
 
 @bot.command()
