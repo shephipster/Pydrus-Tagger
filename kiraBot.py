@@ -84,7 +84,7 @@ async def on_message(message):
 	elif "fuck me" in message.content.lower():
 		await channel.send("that's kinda gross dude")
 
-	if message.content[0] != '+':
+	if message.content and message.content[0] != '+':
 		if message.attachments:
 			for attachment in message.attachments:
 				print("Attachment:", attachment)
