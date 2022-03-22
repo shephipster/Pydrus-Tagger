@@ -1200,6 +1200,43 @@ async def addPowerUserCommand(ctx, guilds, guid, userToAdd):
 			json.dump(guilds, dataFile, indent=4)
 
 
+@bot.command(aliases=['demote', 'fell'])
+async def removePowerUser(ctx: commands.context, userId):
+	await invokePowerCommand(ctx, removePowerUserCommand, int(userId))
+
+
+async def removePowerUserCommand(ctx, guilds, guid, userToAdd):
+	if userToAdd in guilds[guid]['powerUsers']:
+		guilds[guid]['powerUsers'].remove(userToAdd)
+		with open(guildsFile, 'w') as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+
+
+@bot.command(aliases=['empowerRole', 'promoteRole'])
+async def addPowerRole(ctx: commands.context, role):
+	await invokePowerCommand(ctx, addPowerRoleCommand, role)
+
+
+async def addPowerRoleCommand(ctx, guilds, guid, role):
+	print(role)
+	if role not in guilds[guid]['powerRoles']:
+		guilds[guid]['powerRoles'].append(role)
+		with open(guildsFile, 'w') as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+
+
+@bot.command(aliases=['demoteRole', 'fellRole'])
+async def removePowerRole(ctx: commands.context, role):
+	await invokePowerCommand(ctx, removePowerUserCommand, role)
+
+
+async def removePowerRoleCommand(ctx, guilds, guid, role):
+	if role in guilds[guid]['powerRoles']:
+		guilds[guid]['powerRoles'].remove(role)
+		with open(guildsFile, 'w') as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+
+
 @bot.command(aliases=['unblockPornTag', 'unbanPornTag', 'permitPornTag'])
 async def removeBannedExplicitTags(ctx: commands.context, *tags):
 	await invokePowerCommand(ctx, removeBannedExplicitTagsCommand, *tags)
@@ -1319,6 +1356,8 @@ async def updateGuildCommand(guild):
 	f.close()
 
 	guid = f'{guild.id}'
+	for role in guild.roles:
+		print(role)
 
 	tempGuild = Guild.Guild(guild)
 	if guid in data.keys():

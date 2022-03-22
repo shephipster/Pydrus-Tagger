@@ -1188,6 +1188,43 @@ async def addPowerUserCommand(ctx, guilds, guid, userToAdd):
 			json.dump(guilds, dataFile, indent=4)
 
 
+@bot.command(aliases=['demote', 'fell'])
+async def removePowerUser(ctx: commands.context, userId):
+	await invokePowerCommand(ctx, removePowerUserCommand, int(userId))
+
+
+async def removePowerUserCommand(ctx, guilds, guid, userToAdd):
+	if userToAdd in guilds[guid]['powerUsers']:
+		guilds[guid]['powerUsers'].remove(userToAdd)
+		with open(guildsFile, 'w') as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+
+
+@bot.command(aliases=['empowerRole', 'promoteRole'])
+async def addPowerRole(ctx: commands.context, role):
+	await invokePowerCommand(ctx, addPowerRoleCommand, role)
+
+
+async def addPowerRoleCommand(ctx, guilds, guid, role):
+	print(role)
+	if role not in guilds[guid]['powerRoles']:
+		guilds[guid]['powerRoles'].append(role)
+		with open(guildsFile, 'w') as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+
+
+@bot.command(aliases=['demoteRole', 'fellRole'])
+async def removePowerRole(ctx: commands.context, role):
+	await invokePowerCommand(ctx, removePowerUserCommand, role)
+
+
+async def removePowerRoleCommand(ctx, guilds, guid, role):
+	if role in guilds[guid]['powerRoles']:
+		guilds[guid]['powerRoles'].remove(role)
+		with open(guildsFile, 'w') as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+
+
 @bot.command(aliases=['unblockPornTag', 'unbanPornTag', 'permitPornTag'])
 async def removeBannedExplicitTags(ctx: commands.context, *tags):
 	await invokePowerCommand(ctx, removeBannedExplicitTagsCommand, *tags)
@@ -1282,6 +1319,41 @@ async def removeBannedGeneralTagsCommand(ctx, guilds, guid, *tags):
 		json.dump(guilds, dataFile, indent=4)
 
 	await ctx.channel.send(f"Okay, I can now roll stuff with any of the following: {tags}")
+
+#Update command
+
+
+@bot.command(aliases=['update'])
+async def updateGuild(ctx):
+	f = open(guildsFile)
+	data = json.load(f)
+	f.close()
+
+	await updateGuildCommand(ctx.guild.id, data)
+
+
+async def updateAllGuilds():
+	for guild in bot.guilds:
+		await updateGuildCommand(guild)
+
+
+async def updateGuildCommand(guild):
+
+	f = open(guildsFile)
+	data = json.load(f)
+	f.close()
+
+	guid = f'{guild.id}'
+	for role in guild.roles:
+		print(role)
+
+	tempGuild = Guild.Guild(guild)
+	if guid in data.keys():
+		tempGuild.setFromDict(data[guid])
+	data[guid] = tempGuild
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
 
 #============================Channel-specific commands============================#
 
