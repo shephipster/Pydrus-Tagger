@@ -630,7 +630,6 @@ async def randomPost(ctx, *tags):
 		bannedTags.append(tag)
 	for tag in data[guid]['channels'][cid]['bannedNSFWTags']:
 		bannedPorn.append(tag)
-	
 
 	while roll:
 		roll = False
@@ -1330,9 +1329,12 @@ async def updateGuildCommand(guild):
 		json.dump(data, dataFile, indent=4)
 
 #============================Channel-specific commands============================#
+
+
 @bot.command(aliases=['banChannelTag'])
 async def banTagFromChannel(ctx, *tags):
 	await invokePowerCommand(ctx, banTagsFromChannelCommand, *tags)
+
 
 async def banTagsFromChannelCommand(ctx, guilds, guid, *tags):
 	channel = ctx.channel
@@ -1346,9 +1348,11 @@ async def banTagsFromChannelCommand(ctx, guilds, guid, *tags):
 
 	await ctx.channel.send(f"Okay, won't roll stuff in <#{channel.id}> that has {tags}")
 
-@bot.command(aliases=['unbanChannelTag','allowChannelTag'])
+
+@bot.command(aliases=['unbanChannelTag', 'allowChannelTag'])
 async def unbanTagFromChannel(ctx, *tags):
 	await invokePowerCommand(ctx, unbanTagsFromChannelCommand, *tags)
+
 
 async def unbanTagsFromChannelCommand(ctx, guilds, guid, *tags):
 	channel = ctx.channel
@@ -1362,9 +1366,11 @@ async def unbanTagsFromChannelCommand(ctx, guilds, guid, *tags):
 
 	await ctx.channel.send(f"Okay, I can roll stuff in <#{channel.id}> that has {tags} now")
 
+
 @bot.command(aliases=['banChannelPornTag'])
 async def banNSFWTagFromChannel(ctx, *tags):
 	await invokePowerCommand(ctx, banNSFWTagsFromChannelCommand, *tags)
+
 
 async def banNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
 	channel = ctx.channel
@@ -1378,9 +1384,11 @@ async def banNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
 
 	await ctx.channel.send(f"Okay, won't roll stuff in <#{channel.id}> that's porn and has {tags}")
 
-@bot.command(aliases=['unbanChannelNSFWTag','allowChannelNSFWTag','unbanChannelPornTag','allowChannelPornTag'])
+
+@bot.command(aliases=['unbanChannelNSFWTag', 'allowChannelNSFWTag', 'unbanChannelPornTag', 'allowChannelPornTag'])
 async def unbanNSFWTagFromChannel(ctx, *tags):
 	await invokePowerCommand(ctx, unbanNSFWTagsFromChannelCommand, *tags)
+
 
 async def unbanNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
 	channel = ctx.channel
