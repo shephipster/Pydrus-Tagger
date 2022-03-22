@@ -618,6 +618,19 @@ async def randomPost(ctx, *tags):
 		return
 
 	guid = str(ctx.guild.id)
+	cid = str(ctx.channel.id)
+	bannedTags = []
+	bannedPorn = []
+
+	for tag in data[guid]['bannedExplicitTags']:
+		bannedPorn.append(tag)
+	for tag in data[guid]['bannedGeneralTags']:
+		bannedTags.append(tag)
+	for tag in data[guid]['channels'][cid]['bannedTags']:
+		bannedTags.append(tag)
+	for tag in data[guid]['channels'][cid]['bannedNSFWTags']:
+		bannedPorn.append(tag)
+	
 
 	while roll:
 		roll = False
@@ -634,14 +647,14 @@ async def randomPost(ctx, *tags):
 		isExplicit = post['rating'] == 'explicit'
 
 		#Safety filter, if it's loli and explicit re-roll that junk
-		if isExplicit:
-			for tag in tag_list:
-				if tag in data[guid]['bannedExplicitTags']:
-					roll = True
-					break
 		for tag in tag_list:
-			if tag in data[guid]['bannedGeneralTags']:
+			if tag in bannedTags:
 				roll = True
+				print('skipped a post becase of', tag)
+				break
+			if isExplicit and tag in bannedPorn:
+				roll = True
+				print('skipped a post because of', tag)
 				break
 
 		num_rolls += 1
@@ -1285,6 +1298,7 @@ async def removeBannedGeneralTagsCommand(ctx, guilds, guid, *tags):
 
 #Update command
 
+
 @bot.command(aliases=['update'])
 async def updateGuild(ctx):
 	f = open(guildsFile)
@@ -1292,6 +1306,7 @@ async def updateGuild(ctx):
 	f.close()
 
 	await updateGuildCommand(ctx.guild.id, data)
+
 
 async def updateAllGuilds():
 	for guild in bot.guilds:
@@ -1305,7 +1320,7 @@ async def updateGuildCommand(guild):
 	f.close()
 
 	guid = f'{guild.id}'
-	
+
 	tempGuild = Guild.Guild(guild)
 	if guid in data.keys():
 		tempGuild.setFromDict(data[guid])
@@ -1313,5 +1328,38 @@ async def updateGuildCommand(guild):
 
 	with open(guildsFile, "w") as dataFile:
 		json.dump(data, dataFile, indent=4)
+
+#============================Channel-specific commands============================#
+@bot.command(aliases=['banChannelTag'])
+async def banTagFromChannel(ctx, *tags):
+	await invokePowerCommand(ctx, banTagsFromChannelCommand, *tags)
+
+async def banTagsFromChannelCommand(ctx, guilds, guid, *tags):
+	channel = ctx.channel
+	cid = str(channel.id)
+	for tag in tags:
+		if tag not in guilds[guid]['channels'][cid]['bannedTags']:
+			guilds[guid]['channels'][cid]['bannedTags'].append(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(guilds, dataFile, indent=4)
+
+	await ctx.channel.send(f"Okay, won't roll stuff in <#{channel.id}> that has {tags}")
+
+@bot.command(aliases=['unbanChannelTag','allowChannelTag'])
+async def unbanTagFromChannel(ctx, *tags):
+	await invokePowerCommand(ctx, unbanTagsFromChannelCommand, *tags)
+
+async def unbanTagsFromChannelCommand(ctx, guilds, guid, *tags):
+	channel = ctx.channel
+	cid = str(channel.id)
+	for tag in tags:
+		if tag in guilds[guid]['channels'][cid]['bannedTags']:
+			guilds[guid]['channels'][cid]['bannedTags'].remove(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(guilds, dataFile, indent=4)
+
+	await ctx.channel.send(f"Okay, I can roll stuff in <#{channel.id}> that has {tags} now")
 
 bot.run(TOKEN)

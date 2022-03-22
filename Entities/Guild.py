@@ -21,7 +21,8 @@ class Guild(dict):
 
         for channel in guild.channels:
             if type(channel) == discord.channel.TextChannel:
-                channels[channel.id] = Channel(channel)
+                cid = str(channel.id)
+                channels[cid] = Channel(channel)
 
         dict.__init__(self,
                       id=id,
