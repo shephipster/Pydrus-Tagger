@@ -56,6 +56,7 @@ ROLL_LIMIT = 25
 @bot.event
 async def on_ready():
 	initFiles()
+	await updateAllGuilds()
 	print('Running')
 
 
