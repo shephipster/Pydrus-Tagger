@@ -1,65 +1,64 @@
 from .User import User
+from .Channel import Channel
+import discord
 
-class Guild:
-    id: int
-    ownerId: int
-    users: dict
-    name: str
-    purgableIds: list
-    bannedExplicitTags: list
-    bannedGeneralTags: list
-    powerUsers: list
-    powerRoles: list
-
+class Guild(dict):
     def __init__(self, guild):
-        self.id = guild.id
-        self.ownerId = guild.owner_id
-        self.users = dict()
+        id = guild.id
+        ownerId = guild.owner_id
+        users = dict()
         for user in guild.members:
             tmpUser = User(user.id)
             tmpUser.setName(user.name)
-            self.users[user.id] = tmpUser.__dict__
-        self.name = guild.name
-        self.purgableIds = [899043866102071336, 891426527223349258]
-        self.bannedExplicitTags = ['loli', 'shota', 'cub']
-        self.bannedGeneralTags = []
-        self.powerUsers = [guild.owner_id]
-        self.powerRoles = []
+            users[user.id] = tmpUser.__dict__
+        name = guild.name
+        purgableIds = [899043866102071336, 891426527223349258]
+        bannedExplicitTags = ['loli', 'shota', 'cub']
+        bannedGeneralTags = []
+        powerUsers = [guild.owner_id]
+        powerRoles = []
+        channels = dict()
 
-    def setId(self, id: int):
-        self.id = id
+        for channel in guild.channels:
+            if type(channel) == discord.channel.TextChannel:
+                cid = str(channel.id)
+                channels[cid] = Channel(channel)
 
-    def setOwnerId(self, ownerId: int):
-        self.ownerId = ownerId
+        dict.__init__(self,
+                      id=id,
+                      ownerId=ownerId,
+                      users=users,
+                      name=name,
+                      purgableIds=purgableIds,
+                      bannedExplicitTags=bannedExplicitTags,
+                      bannedGeneralTags=bannedGeneralTags,
+                      powerUsers=powerUsers,
+                      powerRoles=powerRoles,
+                      channels=channels
+                      )
 
-    def setUsers(self, users: dict):
-        self.users = users
+    def setFromDict(self, dict: dict):
+        self['id'] = dict['id']
+        self['ownerId'] = dict['ownerId']
+        self['users'] = dict['users']
+        self['name'] = dict['name']
 
-    def setName(self, name: str):
-        self.name = name
+        if 'purgableIds' in dict.keys():
+            self['purgableIds'] = dict['purgableIds']
 
-    def setPurgableIds(self, ids: list):
-        self.purgableIds = ids
+        if 'bannedGeneralTags' in dict.keys():
+            self['bannedGeneralTags'] = dict['bannedGeneralTags']
 
-    def setBannedExplicitTags(self, tags: list):
-        self.bannedExplicitTags = tags
+        if 'bannedExplicitTags' in dict.keys():
+            self['bannedExplicitTags'] = dict['bannedExplicitTags']
 
-    def setBannedGeneralTags(self, tags: list):
-        self.bannedGeneralTags = tags
+        if 'powerUsers' in dict.keys():
+            self['powerUsers'] = dict['powerUsers']
 
-    def setPowerUsers(self, powerUsers:list):
-        self.powerUsers = powerUsers
+        if 'powerRoles' in dict.keys():
+            self['powerRoles'] = dict['powerRoles']
 
-    def setPowerRoles(self, powerRoles:list):
-        self.powerRoles = powerRoles
+        if 'channels' in dict.keys():
+            for channel in dict['channels']:
+                self['channels'][channel] = dict['channels'][channel]
 
-    def setFromDict(self, id, dict):
-        self.id = id
-        self.ownerId = dict['ownerId']
-        self.users = dict['users']
-        self.name = dict['name']
-        self.purgableIds = dict['purgableIds']
-        self.bannedGeneralTags = dict['bannedGeneralTags']
-        self.bannedExplicitTags = dict['bannedExplicitTags']
-        self.powerUsers = dict['powerUsers']
-        self.powerRoles = dict['powerRoles']
