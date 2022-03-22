@@ -20,42 +20,46 @@ class User:
         self.specifyTags = True
         self.tagCombos = []
 
-    def setId(self, id: int):
-        self.id = id
-    
-    def setTags(self, tags: list):
-        self.tags = tags
-
-    def setBlacklist(self, blacklist: list):
-        self.blacklist = blacklist
-
-    def setNotify(self, notify:bool):
-        self.notify = notify
-
-    def setName(self, name:str):
+    def setName(self, name):
         self.name = name
 
-    def setLastPing(self, lastPing: float):
-        self.lastPing = lastPing
+    def setFromDict(self, id, dict:dict):
+        if 'id' in dict.keys():
+            self.id = dict['id']
+        else:
+            self.id = id
 
-    def setPingDelay(self, pingDelay:int):
-        self.pingDelay = pingDelay
+        if 'tags' in dict.keys():
+            self.tags = dict['tags']
+        else:
+            self.tags = []
 
-    def setSpecifyTags(self, specifyTags: bool):
-        self.specifyTags = specifyTags
+        if 'blacklist' in dict.keys():
+            self.blacklist = dict['blacklist']
+        else:
+            self.blacklist = []
 
-    def setTagCombos(self, tagCombos: list):
-        self.tagCombos = tagCombos
+        if 'notify' in dict.keys():
+            self.notify = dict['notify']
+        else:
+            self.notify = True
 
-    def setFromDict(self, id, dict):
-        self.id = id
-        self.tags = dict['tags']
-        self.blacklist = dict['blacklist']
-        self.notify = dict['notify']
-        self.name = dict['name']
-        self.lastPing = dict['lastPing']
-        self.specifyTags = dict['specifyTags']
-        self.tagCombos = dict['tagCombos']
+        if 'name' in dict.keys():
+            self.name = dict['name']
+        else:
+            self.name = ""
 
-    def __str__(self) -> str:
-        return f"ID: {self.id}\nNickname: {self.name}\nTags: {self.tags}\nCombos: {self.tagCombos}\nBlacklist: {self.blacklist}\nDelay: {self.pingDelay}\nNotify: {self.notify}"
+        if 'lastPing' in dict.keys():
+            self.lastPing = dict['lastPing']
+        else:
+            self.lastPing = 0
+
+        if 'specifyTags' in dict.keys():
+            self.specifyTags = dict['specifyTags']
+        else:
+            self.specifyTags = True
+
+        if 'tagCombos' in dict.keys():
+            self.tagCombos = dict['tagCombos']
+        else:
+            self.tagCombos = []

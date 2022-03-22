@@ -10,3 +10,4 @@ Hydrus/__pycache__
 Utilities/__pycache__
 kiraTestBot.py
 tester.py
+.env
