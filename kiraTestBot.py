@@ -1362,4 +1362,36 @@ async def unbanTagsFromChannelCommand(ctx, guilds, guid, *tags):
 
 	await ctx.channel.send(f"Okay, I can roll stuff in <#{channel.id}> that has {tags} now")
 
+@bot.command(aliases=['banChannelPornTag'])
+async def banNSFWTagFromChannel(ctx, *tags):
+	await invokePowerCommand(ctx, banNSFWTagsFromChannelCommand, *tags)
+
+async def banNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
+	channel = ctx.channel
+	cid = str(channel.id)
+	for tag in tags:
+		if tag not in guilds[guid]['channels'][cid]['bannedNSFWTags']:
+			guilds[guid]['channels'][cid]['bannedNSFWTags'].append(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(guilds, dataFile, indent=4)
+
+	await ctx.channel.send(f"Okay, won't roll stuff in <#{channel.id}> that's porn and has {tags}")
+
+@bot.command(aliases=['unbanChannelNSFWTag','allowChannelNSFWTag','unbanChannelPornTag','allowChannelPornTag'])
+async def unbanNSFWTagFromChannel(ctx, *tags):
+	await invokePowerCommand(ctx, unbanNSFWTagsFromChannelCommand, *tags)
+
+async def unbanNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
+	channel = ctx.channel
+	cid = str(channel.id)
+	for tag in tags:
+		if tag in guilds[guid]['channels'][cid]['bannedNSFWTags']:
+			guilds[guid]['channels'][cid]['bannedNSFWTags'].remove(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(guilds, dataFile, indent=4)
+
+	await ctx.channel.send(f"Okay, I can roll stuff in <#{channel.id}> that's porn and has {tags} now")
+
 bot.run(TOKEN)
