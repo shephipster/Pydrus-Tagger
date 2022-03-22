@@ -55,6 +55,7 @@ ROLL_LIMIT = 10
 @bot.event
 async def on_ready():
 	initFiles()
+	await updateAllGuilds()
 	print('Running')
 
 
@@ -1281,5 +1282,36 @@ async def removeBannedGeneralTagsCommand(ctx, guilds, guid, *tags):
 		json.dump(guilds, dataFile, indent=4)
 
 	await ctx.channel.send(f"Okay, I can now roll stuff with any of the following: {tags}")
+
+#Update command
+
+@bot.command(aliases=['update'])
+async def updateGuild(ctx):
+	f = open(guildsFile)
+	data = json.load(f)
+	f.close()
+
+	await updateGuildCommand(ctx.guild.id, data)
+
+async def updateAllGuilds():
+	for guild in bot.guilds:
+		await updateGuildCommand(guild)
+
+
+async def updateGuildCommand(guild):
+
+	f = open(guildsFile)
+	data = json.load(f)
+	f.close()
+
+	guid = f'{guild.id}'
+	
+	tempGuild = Guild.Guild(guild)
+	if guid in data.keys():
+		tempGuild.setFromDict(data[guid])
+	data[guid] = tempGuild
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(data, dataFile, indent=4)
 
 bot.run(TOKEN)
