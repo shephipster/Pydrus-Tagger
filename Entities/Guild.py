@@ -1,4 +1,4 @@
-from Entities import User
+from .User import User
 
 class Guild:
     id: int
@@ -8,6 +8,8 @@ class Guild:
     purgableIds: list
     bannedExplicitTags: list
     bannedGeneralTags: list
+    powerUsers: list
+    powerRoles: list
 
     def __init__(self, guild):
         self.id = guild.id
@@ -21,6 +23,8 @@ class Guild:
         self.purgableIds = [899043866102071336, 891426527223349258]
         self.bannedExplicitTags = ['loli', 'shota', 'cub']
         self.bannedGeneralTags = []
+        self.powerUsers = [guild.owner_id]
+        self.powerRoles = []
 
     def setId(self, id: int):
         self.id = id
@@ -43,6 +47,12 @@ class Guild:
     def setBannedGeneralTags(self, tags: list):
         self.bannedGeneralTags = tags
 
+    def setPowerUsers(self, powerUsers:list):
+        self.powerUsers = powerUsers
+
+    def setPowerRoles(self, powerRoles:list):
+        self.powerRoles = powerRoles
+
     def setFromDict(self, id, dict):
         self.id = id
         self.ownerId = dict['ownerId']
@@ -51,3 +61,5 @@ class Guild:
         self.purgableIds = dict['purgableIds']
         self.bannedGeneralTags = dict['bannedGeneralTags']
         self.bannedExplicitTags = dict['bannedExplicitTags']
+        self.powerUsers = dict['powerUsers']
+        self.powerRoles = dict['powerRoles']

@@ -138,32 +138,6 @@ async def initGuild(ctx):
 	return
 
 
-async def processUser(ctx, guid=-1):
-	#If this is in DM's, there is no guild with an id
-	if not ctx.guild:
-		if guid == -1:
-			await ctx.channel.send("I'm having trouble knowing what guild you want.\nEither try that again in the guild you want to update stuff for or give me the guild ID")
-			return None, None
-	else:
-		guid = str(ctx.guild.id)
-
-	uid = str(ctx.author.id)
-
-	f = open(guildsFile)
-	data = json.load(f)
-	f.close()
-
-	user = User.User(ctx.author.id)
-
-	if uid not in data[guid]['users']:
-		data[guid]['users'][uid] = user.__dict__
-		with open(guildsFile, 'w') as dataFile:
-			json.dump(data, dataFile, indent=4)
-
-	user.setFromDict(uid, data[guid]['users'][uid])
-	return user, data
-
-
 @bot.command(aliases=['tagme', 'addTag', 'addtag'])
 async def tagMe(ctx, *tags):
 	user, data = await processUser(ctx)
@@ -690,8 +664,6 @@ async def randomPost(ctx, *tags):
 
 	return
 
-#TODO: If they use this they
-
 
 @bot.command(aliases=['randomPorn', 'randomExplicit'])
 async def randomNSFW(ctx, *tags):
@@ -757,6 +729,8 @@ def repostDetected(guild, file):
 	data = json.load(f)
 	f.close()
 
+	#TODO: include embeds/urls
+
 	for post in data:
 		values = data[post]
 		if postExpired(values['timePosted']):
@@ -798,150 +772,6 @@ async def removeMessage(ctx, id):
 	else:
 		await ctx.channel.send(f"I'm not allowed to delete stuff {message.author.name} posts")
 	return
-
-
-@bot.command(aliases=['canDelete', 'canRemove', 'canPurge'])
-async def addPurgablePoster(ctx, id):
-	user, data = await processUser(ctx)
-	if user == None or data == None:
-		#there was an issue, break
-		return
-
-	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
-
-	#Can author use this command?
-	if ctx.author.id != ctx.guild.owner_id:
-		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
-		return
-
-	user, data = await processUser(ctx)
-	if id in data[guid]['purgableIds']:
-		await ctx.channel.send("I'm already allowed to delete their posts.")
-	else:
-		data[guid]['purgableIds'].append(id)
-		member = await ctx.guild.fetch_member(id)
-		with open(guildsFile, "w") as dataFile:
-			json.dump(data, dataFile, indent=4)
-		await ctx.channel.send(f"Okay, I can now delete {member.name}'s posts.")
-
-
-@bot.command(aliases=['cantDelete', 'cantRemove', 'cantPurge'])
-async def removePurgablePoster(ctx, id):
-	user, data = await processUser(ctx)
-	if user == None or data == None:
-		#there was an issue, break
-		return
-
-	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
-
-	#Can author use this command?
-	if ctx.author.id != ctx.guild.owner_id:
-		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
-		return
-
-	user, data = await processUser(ctx)
-	if id not in data[guid]['purgableIds']:
-		await ctx.channel.send("I'm already not allowed to delete their posts.")
-	else:
-		data[guid]['purgableIds'].remove(id)
-		member = await ctx.guild.fetch_member(id)
-		with open(guildsFile, "w") as dataFile:
-			json.dump(data, dataFile, indent=4)
-		await ctx.channel.send(f"Okay, I can no longer delete {member.name}'s posts.")
-
-
-@bot.command(aliases=['banTag', 'blockTag'])
-async def addBannedGeneralTags(ctx, *tags):
-	if ctx.author.id != ctx.guild.owner_id:
-		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
-		return
-
-	user, data = await processUser(ctx)
-	if user == None or data == None:
-		#there was an issue, break
-		return
-
-	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
-	for tag in tags:
-		if tag not in data[guid]['bannedGeneralTags']:
-			data[guid]['bannedGeneralTags'].append(tag)
-
-	with open(guildsFile, "w") as dataFile:
-		json.dump(data, dataFile, indent=4)
-
-	await ctx.channel.send(f"Okay, I'll now no longer roll stuff with any of the following: {tags}")
-
-
-@bot.command(aliases=['banExplicitTag', 'blockExplicitTag', 'blockPornTag', 'banPornTag'])
-async def addBannedExplicitTags(ctx, *tags):
-	if ctx.author.id != ctx.guild.owner_id:
-		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
-		return
-
-	user, data = await processUser(ctx)
-	if user == None or data == None:
-		#there was an issue, break
-		return
-
-	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
-	for tag in tags:
-		if tag not in data[guid]['bannedExplicitTags']:
-			data[guid]['bannedExplicitTags'].append(tag)
-
-	with open(guildsFile, "w") as dataFile:
-		json.dump(data, dataFile, indent=4)
-
-	await ctx.channel.send(f"Okay, I'll now no longer roll explicit stuff with any of the following: {tags}")
-
-
-@bot.command(aliases=['unbanExplicitTag', 'unblockExplicitTag', 'unblockPornTag', 'unbanPornTag'])
-async def removeBannedGeneralTags(ctx, *tags):
-	if ctx.author.id != ctx.guild.owner_id:
-		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
-		return
-
-	user, data = await processUser(ctx)
-	if user == None or data == None:
-		#there was an issue, break
-		return
-
-	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
-	for tag in tags:
-		if tag in data[guid]['bannedGeneralTags']:
-			data[guid]['bannedGeneralTags'].remove(tag)
-
-	with open(guildsFile, "w") as dataFile:
-		json.dump(data, dataFile, indent=4)
-
-	await ctx.channel.send(f"Okay, I can now roll stuff with any of the following: {tags}")
-
-
-@bot.command(aliases=['unblockTag', 'unbanTag'])
-async def removeBannedExplicitTags(ctx, *tags):
-	if ctx.author.id != ctx.guild.owner_id:
-		await ctx.channel.send(f"You're not the boss around here, only {ctx.guild.owner} can use this command.")
-		return
-
-	user, data = await processUser(ctx)
-	if user == None or data == None:
-		#there was an issue, break
-		return
-
-	uid = str(ctx.author.id)
-	guid = str(ctx.guild.id)
-	for tag in tags:
-		if tag in data[guid]['bannedExplicitTags']:
-			data[guid]['bannedExplicitTags'].remove(tag)
-
-	with open(guildsFile, "w") as dataFile:
-		json.dump(data, dataFile, indent=4)
-
-	await ctx.channel.send(f"Okay, I can now roll explicit stuff with any of the following: {tags}")
 
 
 @bot.command(aliases=['servers', 'guilds', 'myGuilds'])
@@ -1294,5 +1124,163 @@ def getNumericReaction(num):
 	}
 	return switch.get(num, '❓')
 
+
+async def processUser(ctx, guid=-1):
+	#If this is in DM's, there is no guild with an id
+	if not ctx.guild:
+		if guid == -1:
+			await ctx.channel.send("I'm having trouble knowing what guild you want.\nEither try that again in the guild you want to update stuff for or give me the guild ID")
+			return None, None
+	else:
+		guid = str(ctx.guild.id)
+
+	uid = str(ctx.author.id)
+
+	f = open(guildsFile)
+	guilds = json.load(f)
+	f.close()
+
+	user = User.User(ctx.author.id)
+
+	if uid not in guilds[guid]['users']:
+		guilds[guid]['users'][uid] = user.__dict__
+
+	user.setFromDict(uid, guilds[guid]['users'][uid])
+	return user, guilds
+
+
+#===============================Power commands=================================#
+def userCanUsePowerCommand(guild: Guild, member: discord.Member):
+	userId = int(member.id)
+	if userId in guild['powerUsers']:
+		return True
+	for role in member.roles:
+		if role in guild['powerRoles']:
+			return True
+	return False
+
+
+async def invokePowerCommand(ctx: commands.context, command, *params):
+	user: User
+	guild: Guild
+	user, guilds = await processUser(ctx)
+	guild = guilds[f'{ctx.guild.id}']
+
+	if user == None or guild == None:
+		#there was some sort of issue
+		return
+	if not userCanUsePowerCommand(guild, ctx.author):
+		await ctx.channel.send(f"You don't have permission to use this command!")
+		return
+
+	await command(ctx, guilds, f'{ctx.guild.id}', *params)
+
+
+@bot.command(aliases=['empower', 'promote'])
+async def addPowerUser(ctx: commands.context, userId):
+	await invokePowerCommand(ctx, addPowerUserCommand, int(userId))
+
+
+async def addPowerUserCommand(ctx, guilds, guid, userToAdd):
+	if userToAdd not in guilds[guid]['powerUsers']:
+		guilds[guid]['powerUsers'].append(userToAdd)
+		with open(guildsFile, 'w') as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+
+
+@bot.command(aliases=['unblockPornTag', 'unbanPornTag', 'permitPornTag'])
+async def removeBannedExplicitTags(ctx: commands.context, *tags):
+	await invokePowerCommand(ctx, removeBannedExplicitTagsCommand, *tags)
+
+
+async def removeBannedExplicitTagsCommand(ctx, guilds, guid, *tags):
+	for tag in tags:
+		if tag in guilds[guid]['bannedExplicitTags']:
+			guilds[guid]['bannedExplicitTags'].remove(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(guilds, dataFile, indent=4)
+
+	await ctx.channel.send(f"Okay, I can now roll explicit stuff with any of the following: {tags}")
+
+
+@bot.command(aliases=['banExplicitTag', 'blockExplicitTag', 'blockPornTag', 'banPornTag'])
+async def addBannedExplicitTags(ctx: commands.context, *tags):
+	await invokePowerCommand(ctx, addBannedExplicitTagsCommand, *tags)
+
+
+async def addBannedExplicitTagsCommand(ctx, guilds, guid, *tags):
+	for tag in tags:
+		if tag not in guilds[guid]['bannedExplicitTags']:
+			guilds[guid]['bannedExplicitTags'].append(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(guilds, dataFile, indent=4)
+
+	await ctx.channel.send(f"Okay, I'll now no longer roll explicit stuff with any of the following: {tags}")
+
+
+@bot.command(aliases=['canDelete', 'canRemove', 'canPurge'])
+async def addPurgablePoster(ctx: commands.context, id):
+	await invokePowerCommand(ctx, addPowerUserCommand, id)
+
+
+async def addPurgablePosterCommand(ctx, guilds, guid, id):
+	if id in guilds[guid]['purgableIds']:
+		await ctx.channel.send("I'm already allowed to delete their posts.")
+	else:
+		guilds[guid]['purgableIds'].append(id)
+		member = await ctx.guild.fetch_member(id)
+		with open(guildsFile, "w") as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+		await ctx.channel.send(f"Okay, I can now delete {member.name}'s posts.")
+
+
+@bot.command(aliases=['cantDelete', 'cantRemove', 'cantPurge'])
+async def removePurgablePoster(ctx: commands.context, id):
+	await invokePowerCommand(ctx, removePurgablePosterCommand, id)
+
+
+async def removePurgablePosterCommand(ctx, guilds, guid, id):
+	if id not in guilds[guid]['purgableIds']:
+		await ctx.channel.send("I'm already not allowed to delete their posts.")
+	else:
+		guilds[guid]['purgableIds'].remove(id)
+		member = await ctx.guild.fetch_member(id)
+		with open(guildsFile, "w") as dataFile:
+			json.dump(guilds, dataFile, indent=4)
+		await ctx.channel.send(f"Okay, I can no longer delete {member.name}'s posts.")
+
+
+@bot.command(aliases=['banTag', 'blockTag'])
+async def addBannedGeneralTags(ctx: commands.context, *tags):
+	await invokePowerCommand(ctx, addBannedGeneralTagsCommand, *tags)
+
+
+async def addBannedGeneralTagsCommand(ctx, guilds, guid, *tags):
+	for tag in tags:
+		if tag not in guilds[guid]['bannedGeneralTags']:
+			guilds[guid]['bannedGeneralTags'].append(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(guilds, dataFile, indent=4)
+
+	await ctx.channel.send(f"Okay, I'll now no longer roll stuff with any of the following: {tags}")
+
+
+@bot.command(aliases=['unblockTag', 'unbanTag'])
+async def removeBannedGeneralTags(ctx: commands.context, *tags):
+	await invokePowerCommand(ctx, removeBannedGeneralTagsCommand, *tags)
+
+
+async def removeBannedGeneralTagsCommand(ctx, guilds, guid, *tags):
+	for tag in tags:
+		if tag in guilds[guid]['bannedGeneralTags']:
+			guilds[guid]['bannedGeneralTags'].remove(tag)
+
+	with open(guildsFile, "w") as dataFile:
+		json.dump(guilds, dataFile, indent=4)
+
+	await ctx.channel.send(f"Okay, I can now roll stuff with any of the following: {tags}")
 
 bot.run(TOKEN)
