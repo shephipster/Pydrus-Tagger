@@ -1,5 +1,6 @@
 import os
 import requests
+import io
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -321,7 +322,6 @@ def addTag(id, tag):
     This does NOT push tags to PTR
 """
 
-
 def updateTag(id, oldTag, newTag):
 
     if oldTag == newTag:
@@ -338,6 +338,7 @@ def updateTag(id, oldTag, newTag):
             }
         }
     }
+    res = requests.post(url, json=body)
     return
 
 
@@ -348,6 +349,15 @@ def fileExists(id):
     else:
         return True
 
+def getImageBytesByHash(hash):
+    url = HYDRUS_URL + f"get_files/file?hash={hash}"
+    res = requests.get(url, headers=header)
+
+    if(res.headers['Content-Type'] == "text/html"):
+        if (res.headers['Content-Length'] == '44' or res.headers['Content-Length'] == '25'):
+            return None
+
+    return io.BytesIO(res.content)
 
 def getImageByHash(hash):
 
@@ -384,3 +394,38 @@ def getMetaFromHash(hash):
             return None
 
     return res.json()['metadata'][0]
+
+def getAllFilesOfType(fileType:str):
+    url = HYDRUS_URL + 'get_files/search_files?tags=%5B%22system%3Afiletype%20is%20'+ fileType +'%22%5D&return_hashes=true'
+    res = requests.get(url, headers=header)
+
+    if(res.headers['Content-Type'] == "text/html"):
+        if (res.headers['Content-Length'] == '44' or res.headers['Content-Length'] == '25'):
+            return None
+
+    return res.json()['hashes']
+
+def addHashesToPage(pageTitle='Pydrus', *hashes):
+    key = getPageKey(pageTitle)
+    body = {
+        "page_key": key,
+        "hashes": [*hashes]
+    }
+    url = HYDRUS_URL + 'manage_pages/add_files'
+
+    res = requests.post(url, headers=header, json=body)
+    return
+
+def getPageKey(pageTitle):
+    #Either focus the page or create it if it doesn't exist
+    uploadURL("https://hydrusnetwork.github.io/hydrus/developer_api.html", title=pageTitle) 
+    #need to send some page to Hydrus, might as well use the API guide
+
+    url = HYDRUS_URL + 'manage_pages/get_pages'
+    res = requests.get(url, headers=header)
+    pages = res.json()['pages']['pages']
+    for page in pages:
+        if page['name'] == pageTitle:
+            return page['page_key']
+
+    return None #if the page was neither created nor found
