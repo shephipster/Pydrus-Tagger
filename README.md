@@ -9,12 +9,17 @@ but this is just a small hobby project so do what you want with this. Make a dis
 private Hydrus library, it's all up to you.
 
 Usage:
-If you just want to work on tagging your Hydrus files the simplest way is to run HyTagUI.py
+If you just want to work on tagging your Hydrus files the simplest way is to run IQDBTagger.py
+As a side note, an unintended but much welcome side effect is that it will also give you a good amount of similar/recommended images. This wasn't
+actually meant to happen, but it turns out that artists tend to draw similar work to themselves so you get similar content.
 
-  It is highly recommended to run hashFileEstimater.py first. It will rapidly go through your Hydrus database and create two files for you. This is extremely useful if it is your first time using
-  HyTagUI.py or if you, like I did 30 minutes prior to making hashFileEstimater.py, accidentally delete your file containing all of the processed files HyTagUI has already worked on.
-  processedHashes.txt will contain a list of all hashes that have at least one url reference to a site that has tags (Gel, Dan, Sankaku, E621, Pixiv) and is the default for HyTagUI.py. 
-  needWork.txt doesn't actually have much use and can be deleted.
+  It is highly recommended to run hashFileEstimater.py first. It will rapidly go through your Hydrus database and create two files for you, one of files that the
+  system doesn't think need to be processed and ones it does think need to be worked on. This is extremely useful if it is your first time using
+  HyTagUI.py and you already have filees you pulled in from a booru or if you, like I did 30 minutes prior to making hashFileEstimater.py, accidentally 
+  delete your file containing all of the processed files HyTagUI has already worked on.
+  processedHashes.txt will contain a list of all hashes that have at least one url reference to a site that has tags (Gel, Dan, Sankaku, E621, Pixiv)
+  and is the default for HyTagUI.py. 
+  needWork.txt doesn't actually have much use and can be deleted at the moment, but at some point I might find a use for it someday.
 
   (Make sure you have a processedIQDBHashes.txt file, even if it's blank)
   Launch IQDBTagger.py
@@ -27,6 +32,5 @@ KiraBot:
   Kira bot serves as a proof-of-concept for using the various different APIs in other programs. 
   It can currently:
   Track of what tags users request to be pinged for and will do so if an image posted to the server is found to have those tags.
-  It can also roll random images from Gelbooru (and Danbooru but that's disabled by default due to API limits) that have specific tags, skipping ones that have tags blacklisted by the server.
+  It can also roll random images from Gelbooru (and Danbooru but that's disabled by default due to API limits) that have specific tags, skipping ones that have tags blacklisted by the server or the channel you are rolling images in. (Added the blacklist after some poor saps tried to get girls in the cowgirl position and ended up with horse genetalia in their server. Default blacklist includes explicit [loli, shota, and cub] images)
   Roll random elements from a list (A user may ask it to pick three random days of the week for example using "+random [Mon,Tue,Wed,Thur,Fri]")
-  
