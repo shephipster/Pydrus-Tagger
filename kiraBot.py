@@ -87,7 +87,6 @@ async def on_message(message):
 	if message.content and message.content[0] != '+':
 		if message.attachments:
 			for attachment in message.attachments:
-				print("Attachment:", attachment)
 				imageLink = attachment.url
 				data = IQDB.getInfoUrl(imageLink)
 				tag_list = data['tags']
@@ -96,7 +95,6 @@ async def on_message(message):
 					await message.add_reaction(str('♻️'))
 		elif message.embeds:
 			for embed in message.embeds:
-				print("Embed:", embed)
 				imageLink = embed.url
 				data = IQDB.getInfoUrl(imageLink)
 				tag_list = data['tags']

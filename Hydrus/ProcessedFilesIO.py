@@ -1,9 +1,15 @@
+import os
 class ProcessedFilesIO:
     hashes: dict
     file: str
 
     def __init__(self, file):     
         #ensure exists
+
+        if not os.path.exists(file):
+            with open(file, 'a') as f:
+                f.write("")
+
         self.file = file
         self.hashes = dict()
         ProcessedFilesIO.load(self, file)  
