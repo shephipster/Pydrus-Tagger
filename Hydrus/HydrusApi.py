@@ -9,22 +9,21 @@ HYDRUS_URL = os.getenv("HYDRUS_URL")
 HYDRUS_KEY = os.getenv('HYDRUS_API_KEY')
 #4096 caused errors, but 1024 seems to be acceptable.
 #Lower it if you have problems until the connection stops dropping
-PAGE_SIZE = 1024     
+PAGE_SIZE = 1024
 
 header = {
     'Hydrus-Client-API-Access-Key': HYDRUS_KEY,
     'User-Agent': "Pydrus-Client/1.0.0"
 }
 
-
-
-
 # Overhaul of the API, going to clean this up and make the function names make a lot more sense
 # This is basically a 1-to-1 python copy of https://hydrusnetwork.github.io/hydrus/developer_api.html
-# also check out https://gitlab.com/cryzed/hydrus-api , the "official" Python Hydrus API 
+# also check out https://gitlab.com/cryzed/hydrus-api , the "official" Python Hydrus API
 ### Access Management
 
 # GET /api_version
+
+
 def get_api_version():
     """ Returns, in this order, the api_version and hydrus_version of the connected instance """
     url = HYDRUS_URL + "api_version"
@@ -33,9 +32,13 @@ def get_api_version():
     api_version, hydrus_version = json['version'], json['hydrus_version']
     return api_version, hydrus_version
 # GET /request_new_permissions
-def request_new_permissions(name:str, basic_permissions:list):
+
+
+def request_new_permissions(name: str, basic_permissions: list):
     """ Takes a name and a list of permissions"""
     pass
+
+
 def get_permission_list(import_urls=False, import_files=False, add_tags=False, search_for_files=False, manage_pages=False, manage_cookies=False, manage_database=False):
     """ 
     Helps to get the list of basic_permissiosn for request_new_permissions. Pass True for the permissions you need/want
@@ -58,26 +61,35 @@ def get_permission_list(import_urls=False, import_files=False, add_tags=False, s
         basic_permissions.append(6)
     return basic_permissions
 # GET /session_key
+
+
 def get_session_key():
     """ Returns a string of a new session key in hex """
     pass
 # GET /verify_access_key
+
+
 def verify_access_key():
     """ Returns a dictionary that contains the error code (if any) and the permission info (if no error)
         Format is {'error_code', 'basic_permissions','human_decscription'}
     """
     pass
 # GET /get_services
+
+
 def get_services():
     """ Returns a dictionary of all the file and tag services, including their name and service key"""
     pass
 ### Adding Files
 # POST /add_files/add_file
-def add_file_by_path(path_to_file:str):
+
+
+def add_file_by_path(path_to_file: str):
     """ Adds a file to the client for importing, given a string representation of the path to the file"""
     pass
 
-def add_file_by_stream(data:bytes):
+
+def add_file_by_stream(data: bytes):
     """ Adds a file to the client for importing, given the raw file (via its bytes representation)
         
         Args:
@@ -103,7 +115,9 @@ def add_file_by_stream(data:bytes):
     """
     pass
 # POST /add_files/delete_files
-def delete_files(file_service_name:str="", file_service_key:str="", reason:str="", *hashes:str):
+
+
+def delete_files(file_service_name: str = "", file_service_key: str = "", reason: str = "", *hashes: str):
     """ Deletes a set of files from given services
     Args:
         file_service_name(str): The name of the file_service to delete the file(s) from. May be left blank to delete from all local files
@@ -117,7 +131,9 @@ def delete_files(file_service_name:str="", file_service_key:str="", reason:str="
     pass
 
 # POST /add_files/undelete_files
-def undelete_files(file_service_name:str="", file_service_key:str="", *hashes:str):
+
+
+def undelete_files(file_service_name: str = "", file_service_key: str = "", *hashes: str):
     """ Deletes a set of files from given services
     Args:
         file_service_name(str): The name of the file_service to recover the file(s) from.
@@ -129,7 +145,9 @@ def undelete_files(file_service_name:str="", file_service_key:str="", *hashes:st
     """
     pass
 # POST /add_files/archive_files
-def archive_files(*hashes:str):
+
+
+def archive_files(*hashes: str):
     """ Archives file(s) 
     Args:
         *hashes(str): A sequence of strings that are the hexadecimal SHA256 hashes of the files to archive
@@ -139,7 +157,9 @@ def archive_files(*hashes:str):
     """
     pass
 # POST /add_files/unarchive_files
-def unarchive_files(*hashes:str):
+
+
+def unarchive_files(*hashes: str):
     """ Unarchives file(s) 
     Args:
         *hashes(str): A sequence of strings that are the hexadecimal SHA256 hashes of the files to unarchive
@@ -150,14 +170,114 @@ def unarchive_files(*hashes:str):
     pass
 ### Adding Tags
 # GET /add_tags/clean_tags
+
+
+def clean_tags(*tags: str):
+    """ Asks the client about how it will see certain tags and cleans them
+    Cleaning mostly involves removing whitespace, dealing with 'system', hypen-started tags, and things that start with ':', such as " :) "
+    Args:
+        *tags(str): A list of tags you wish to have cleaned. 
+
+    Returns:
+        a list of all the tags in their cleaned state in sorted order
+    """
+    pass
 # GET /add_tags/get_tag_services
+
+
+def get_tag_services():
+    """ Returns a list of the local tags and tag repository services 
+    Returns:
+        a list of of the local tags services, and a list of the tag repositories
+    """
+    pass
 # GET /add_tags/search_tags
+
+
+def search_tags(tag: str):
+    """
+    Searchs the client for specific tags that contain a specific tag as a substring
+    Returns:
+        a list of all the tags that contain the substring, with content of
+        {
+            "value": str,
+            "count": int
+        }
+    """
+    pass
 # POST /add_tags/add_tags
 ### Adding URLs
 # GET /add_urls/get_url_files
+
+
+def get_url_files(url: str):
+    """Ask the client about a URL's files
+    Returns:{
+        "normalized_url":str,
+        "url_file_statuses":[
+            {
+                "status":int,
+                "hash": str,
+                "note": str
+            }
+        ]
+    }
+    """
+    pass
 # GET /add_urls/get_url_info
+
+
+def get_url_info(url: str):
+    """Ask the client for information about a URL
+    Returns:{
+        "normalized_url":str,
+        "url_type": int,
+        "url_type_string" : str,
+        "match_name" : str,
+        "can_parse": true
+    }
+    """
+    pass
 # POST /add_urls/add_url
+
+
+def add_url(url: str, destination_page_key: str = "", destination_page_name: str = "", show_destination_page:bool=False, 
+    service_names_to_additional_tags: dict = {}, service_keys_to_additional_tags:dict={}, filterable_tags:list=[]):
+    """ Add a url to Hydrus to be imported, identical to drag-and-dropping the url into the client
+    Params:
+        url(str): The url for the client to import
+        destination_page_key(str): The key of a specific page to add the url to, may be left blank
+        desitnation_page_name(str): The name of a specific page to add the url to, may be left blank
+        show_destination_page(bool): Tells the client if it should change the ui to focus on the destination page
+        service_names_to_additional_tags(dict): Selective tags to add to all files imported from the url
+        service_keys_to_additional_tags(dict): selective tags to give to any files imported from this url
+        filterable_tags(list): tags to be filtered by any tag import options that applies to the url
+
+    Returns:
+        {
+            "human_result_text": str,
+            "normalized_url": str
+        }
+    """
+    pass
 # POST /add_urls/associate_url
+def associate_url(url_to_add:str="", urls_to_add:list=[], url_to_delete:str="", urls_to_delete:list=[], hash:str="", hashes:list=[], file_id:int=-1, file_ids:list=[]):
+    """ 
+    Manage which URLs the client considers to be associated with which files. All parameters are optional, but you must include at least one url and one hash.
+    It is recommended to use a single hash at a time, but multiple may be done at once.
+    Params:
+        url_to_add: (an url you want to associate with the file(s))
+        urls_to_add: (a list of urls you want to associate with the file(s))
+        url_to_delete: (an url you want to disassociate from the file(s))
+        urls_to_delete: (a list of urls you want to disassociate from the file(s))
+        hash: (an SHA256 hash for a file in 64 characters of hexadecimal)
+        hashes: (a list of SHA256 hashes)
+        file_id: (a numerical file id)
+        file_ids: (a list of numerical file ids)
+
+    Returns: True if successful, false otherwise
+    """
+    pass
 ### Adding Notes
 # POST /add_notes/set_notes
 # POST /add_notes/delete_notes
@@ -189,12 +309,14 @@ def getAllFileIds():
     ids = res.json()['file_ids']
     return sorted(ids)
 
+
 def getAllFileHashes():
     """ Returns a sorted list of all the file hashes the client has"""
     url = HYDRUS_URL + "get_files/search_files?&return_hashes=true"
     res = requests.get(url, headers=header)
     hashes = res.json()['hashes']
     return sorted(hashes)
+
 
 def getAllMainFileData():
     """ Returns a set of all the main data for all files the client has. This is a good amount of information so be
@@ -203,11 +325,11 @@ def getAllMainFileData():
     pagedIds = list()
     data = dict()
     length = len(ids)
-    count = 0    
+    count = 0
 
     for i in range(0, length, PAGE_SIZE):
-        pagedIds.append(ids[i:i+PAGE_SIZE])    
-    
+        pagedIds.append(ids[i:i+PAGE_SIZE])
+
     for page in pagedIds:
         meta = getMetaData(*page).json()['metadata']
         for entry in meta:
@@ -230,7 +352,7 @@ def getPage(start, range):
     return page
 
 
-def getNextPageStart(lastPage:list):
+def getNextPageStart(lastPage: list):
     """ Returns the first file id in what would be the next page given a previous page list. Useful for pagination to an extent"""
     return getPage(lastPage[-1], 2)[-1]
 
@@ -254,6 +376,7 @@ def getLastId():
     body = res.json()
     id = body['file_ids'][0]
     return id
+
 
 def getImageById(id):
     """ Returns a string file path to a copy of a file in the system. Finds the image with the given id and, if it exists
@@ -331,6 +454,7 @@ def getFileType(contentType):
         %5D for ], and %5C for ','
 """
 
+
 def getMetaData(*ids):
     """ Gets a list of all the meta data for all given files by their id"""
     encodedIds = "%5B"
@@ -350,6 +474,7 @@ def getMeta(id):
     jsonData = data.json()
     meta = jsonData['metadata'][0]
     return meta
+
 
 """0- current, 1- pending, 2- deleted, 3-petitioned"""
 
@@ -534,7 +659,8 @@ def getImageByHash(hash):
 
 
 def getMetaFromHash(hash):
-    url = HYDRUS_URL + "get_files/file_metadata?hashes=%5B%22" + hash + "%22%5D&detailed_url_information=true"
+    url = HYDRUS_URL + "get_files/file_metadata?hashes=%5B%22" + \
+        hash + "%22%5D&detailed_url_information=true"
     res = requests.get(url, headers=header)
 
     if(res.headers['Content-Type'] == "text/html"):

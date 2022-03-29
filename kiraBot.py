@@ -45,17 +45,17 @@ intents.dm_messages = True
 bot = commands.Bot(command_prefix='+',
                    description=description, intents=intents)
 
-testImage = 'https://cdn.discordapp.com/attachments/772128575213666309/772181178068762634/nfsuiefmiesfbosdtgd.png'
 logFile = './kiraBotFiles/imageLog.json'
 guildsFile = './kiraBotFiles/guilds.json'
 
 pic_ext = ['.jpg', '.png', '.gif', '.jpeg', '.bmp']
-ROLL_LIMIT = 25
+ROLL_LIMIT = 10
 
 
 @bot.event
 async def on_ready():
 	initFiles()
+	await updateAllGuilds()
 	print('Running')
 
 
@@ -84,25 +84,25 @@ async def on_message(message):
 	elif "fuck me" in message.content.lower():
 		await channel.send("that's kinda gross dude")
 
-	if message.content and message.content[0] != '+':
+	if not message.content or message.content[0] != '+':
 		if message.attachments:
 			for attachment in message.attachments:
-				print("Attachment:", attachment)
 				imageLink = attachment.url
 				data = IQDB.getInfoUrl(imageLink)
-				tag_list = data['tags']
-				await ping_people(message, tag_list)
-				if repostDetected(message.channel.guild, imageLink):
-					await message.add_reaction(str('♻️'))
+				if data != None:
+					tag_list = data['tags']
+					await ping_people(message, tag_list)
+					if repostDetected(message.channel.guild, imageLink):
+						await message.add_reaction(str('♻️'))
 		elif message.embeds:
 			for embed in message.embeds:
-				print("Embed:", embed)
 				imageLink = embed.url
 				data = IQDB.getInfoUrl(imageLink)
-				tag_list = data['tags']
-				await ping_people(message, tag_list)
-				if repostDetected(message.channel.guild, imageLink):
-					await message.add_reaction(str('♻️'))
+				if data != None:
+					tag_list = data['tags']
+					await ping_people(message, tag_list)
+					if repostDetected(message.channel.guild, imageLink):
+						await message.add_reaction(str('♻️'))
 	await bot.process_commands(message)
 
 
@@ -618,6 +618,18 @@ async def randomPost(ctx, *tags):
 		return
 
 	guid = str(ctx.guild.id)
+	cid = str(ctx.channel.id)
+	bannedTags = []
+	bannedPorn = []
+
+	for tag in data[guid]['bannedExplicitTags']:
+		bannedPorn.append(tag)
+	for tag in data[guid]['bannedGeneralTags']:
+		bannedTags.append(tag)
+	for tag in data[guid]['channels'][cid]['bannedTags']:
+		bannedTags.append(tag)
+	for tag in data[guid]['channels'][cid]['bannedNSFWTags']:
+		bannedPorn.append(tag)
 
 	while roll:
 		roll = False
@@ -634,14 +646,14 @@ async def randomPost(ctx, *tags):
 		isExplicit = post['rating'] == 'explicit'
 
 		#Safety filter, if it's loli and explicit re-roll that junk
-		if isExplicit:
-			for tag in tag_list:
-				if tag in data[guid]['bannedExplicitTags']:
-					roll = True
-					break
 		for tag in tag_list:
-			if tag in data[guid]['bannedGeneralTags']:
+			if tag in bannedTags:
 				roll = True
+				#print('skipped a post becase of', tag)
+				break
+			if isExplicit and tag in bannedPorn:
+				roll = True
+				#print('skipped a post because of', tag)
 				break
 
 		num_rolls += 1
@@ -1206,7 +1218,7 @@ async def addPowerRole(ctx: commands.context, role):
 
 
 async def addPowerRoleCommand(ctx, guilds, guid, role):
-	print(role)
+	#print(role)
 	if role not in guilds[guid]['powerRoles']:
 		guilds[guid]['powerRoles'].append(role)
 		with open(guildsFile, 'w') as dataFile:
@@ -1344,8 +1356,8 @@ async def updateGuildCommand(guild):
 	f.close()
 
 	guid = f'{guild.id}'
-	for role in guild.roles:
-		print(role)
+	#for role in guild.roles:
+		#print(role)
 
 	tempGuild = Guild.Guild(guild)
 	if guid in data.keys():
