@@ -44,7 +44,6 @@ intents.dm_messages = True
 bot = commands.Bot(command_prefix='+',
                    description=description, intents=intents)
 
-testImage = 'https://cdn.discordapp.com/attachments/772128575213666309/772181178068762634/nfsuiefmiesfbosdtgd.png'
 logFile = './kiraBotFiles/imageLog.json'
 guildsFile = './kiraBotFiles/guilds.json'
 
@@ -84,25 +83,25 @@ async def on_message(message):
 	elif "fuck me" in message.content.lower():
 		await channel.send("that's kinda gross dude")
 
-	if message.content[0] != '+':
+	if not message.content or message.content[0] != '+':
 		if message.attachments:
 			for attachment in message.attachments:
-				print("Attachment:", attachment)
 				imageLink = attachment.url
 				data = IQDB.getInfoUrl(imageLink)
-				tag_list = data['tags']
-				await ping_people(message, tag_list)
-				if repostDetected(message.channel.guild, imageLink):
-					await message.add_reaction(str('♻️'))
+				if data != None:
+					tag_list = data['tags']
+					await ping_people(message, tag_list)
+					if repostDetected(message.channel.guild, imageLink):
+						await message.add_reaction(str('♻️'))
 		elif message.embeds:
 			for embed in message.embeds:
-				print("Embed:", embed)
 				imageLink = embed.url
 				data = IQDB.getInfoUrl(imageLink)
-				tag_list = data['tags']
-				await ping_people(message, tag_list)
-				if repostDetected(message.channel.guild, imageLink):
-					await message.add_reaction(str('♻️'))
+				if data != None:
+					tag_list = data['tags']
+					await ping_people(message, tag_list)
+					if repostDetected(message.channel.guild, imageLink):
+						await message.add_reaction(str('♻️'))
 	await bot.process_commands(message)
 
 
@@ -543,7 +542,7 @@ async def checkNotifications(ctx):
 		await ctx.send(f"{userName}, you don't have a tag list yet. Use +tagMe <tag> to start one!")
 
 
-@bot.command(aliases=['tags'])
+@bot.command(aliases=['tags','tagsFor'])
 async def getTagsFor(ctx):
 	""" Gets the tags for a given image """
 	if not ctx.message.attachments:
@@ -649,11 +648,11 @@ async def randomPost(ctx, *tags):
 		for tag in tag_list:
 			if tag in bannedTags:
 				roll = True
-				print('skipped a post becase of', tag)
+				#print('skipped a post becase of', tag)
 				break
 			if isExplicit and tag in bannedPorn:
 				roll = True
-				print('skipped a post because of', tag)
+				#print('skipped a post because of', tag)
 				break
 
 		num_rolls += 1
@@ -1218,7 +1217,7 @@ async def addPowerRole(ctx: commands.context, role):
 
 
 async def addPowerRoleCommand(ctx, guilds, guid, role):
-	print(role)
+	#print(role)
 	if role not in guilds[guid]['powerRoles']:
 		guilds[guid]['powerRoles'].append(role)
 		with open(guildsFile, 'w') as dataFile:
@@ -1356,8 +1355,8 @@ async def updateGuildCommand(guild):
 	f.close()
 
 	guid = f'{guild.id}'
-	for role in guild.roles:
-		print(role)
+	#for role in guild.roles:
+		#print(role)
 
 	tempGuild = Guild.Guild(guild)
 	if guid in data.keys():

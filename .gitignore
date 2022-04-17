@@ -9,6 +9,6 @@ Hydrus/__pycache__
 Utilities/__pycache__
 kiraTestBot.py
 tester.py
-.vscode/launch.json
-guilds.json
 .env
+guilds.json
+.vscode/launch.json
