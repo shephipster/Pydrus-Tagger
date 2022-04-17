@@ -19,14 +19,15 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-
+DEBUG = False
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
 
 # This is used for debugging
-#DISCORD_API_KEY = os.getenv('DISCORD_TEST_API_KEY')
-#TOKEN = os.getenv('DISCORD_TEST_TOKEN')
+if DEBUG:
+	DISCORD_API_KEY = os.getenv('DISCORD_TEST_API_KEY')
+	TOKEN = os.getenv('DISCORD_TEST_TOKEN')
 
 description = ''' Kira bot. Pings users for images that have tags they like. '''
 #Consts
@@ -464,12 +465,12 @@ async def ping_people(ctx, tag_list):
 		tmpUser.setFromDict(user, data[guid]['users'][user])
 
 		# #Uncomment after debugging
-		if type(ctx) == discord.message.Message:
-			if ctx.author.id == tmpUser.id:
-				continue
-		else:
-			if int(tmpUser.id) == ctx.message.author.id:
-				continue
+		# if type(ctx) == discord.message.Message:
+		# 	if ctx.author.id == tmpUser.id:
+		# 		continue
+		# else:
+		# 	if int(tmpUser.id) == ctx.message.author.id:
+		# 		continue
 
 		if all(bTag not in tag_list for bTag in data[guid]['users'][user]['blacklist']):
 			if (pingTime - tmpUser.lastPing < tmpUser.pingDelay):
@@ -478,7 +479,7 @@ async def ping_people(ctx, tag_list):
 				for tag in tag_list:
 					realTag = Tagger.getCleanTag(tag)
 					if realTag in tmpUser.tags and tmpUser not in loggedUsers:
-						data[guid]['users'][tmpUser.id]['lastPing'] = pingTime
+						data[guid]['users'][str(tmpUser.id)]['lastPing'] = pingTime
 						loggedUsers.append(tmpUser)
 					# else:
 						# for combo in tmpUser.tagCombos:
