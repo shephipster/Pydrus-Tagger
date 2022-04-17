@@ -19,14 +19,15 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-
+DEBUG = True
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
 
 # This is used for debugging
-#DISCORD_API_KEY = os.getenv('DISCORD_TEST_API_KEY')
-#TOKEN = os.getenv('DISCORD_TEST_TOKEN')
+if DEBUG:
+	DISCORD_API_KEY = os.getenv('DISCORD_TEST_API_KEY')
+	TOKEN = os.getenv('DISCORD_TEST_TOKEN')
 
 description = ''' Kira bot. Pings users for images that have tags they like. '''
 #Consts
