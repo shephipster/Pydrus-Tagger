@@ -52,6 +52,10 @@ guildsFile = './kiraBotFiles/guilds.json'
 pic_ext = ['.jpg', '.png', '.gif', '.jpeg', '.bmp']
 ROLL_LIMIT = 10
 
+@bot.event
+async def on_guild_join(guild):
+	print("Joined guild", guild)  
+	await updateGuildCommand(guild)
 
 @bot.event
 async def on_ready():
