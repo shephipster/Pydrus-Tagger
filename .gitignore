@@ -11,3 +11,5 @@ Utilities/__pycache__
 kiraTestBot.py
 tester.py
 .env
+guilds.json
+.vscode/launch.json
