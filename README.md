@@ -1,3 +1,11 @@
+# Kira Bot
+She tags, she pings, she rolls pictures. She's a jack of all trades and totally not modeled after the character she gets her image from.
+She's also bound to have some bugs so if something doesn't work or you don't get pinged for an image you probably should have don't be
+super surprised. You can run her yourself, which I recommend personally because whoever runs her can see all the tags people have and
+you won't have to worry about my little Raspberry Pi making the bot drop, but if you want to add the instance I'm running then you can
+go to https://discord.com/api/oauth2/authorize?client_id=891426527223349258&permissions=130112&scope=bot%20applications.commands
+
+
 # Pydrus-Tagger
 Takes a Hydrus server and tags images using SauceNao and its results. Written in Python and can be used for more than just Hydrus.
 
