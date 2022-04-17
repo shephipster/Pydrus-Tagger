@@ -1,6 +1,7 @@
 import requests
 import re
 import os
+from . import DanbooruService, GelbooruService, E621Service
 
 URL = "https://iqdb.org"
 FILE_LIMIT = 8192000 #limit is 8192KB
@@ -57,17 +58,21 @@ def getTags(refined: str):
     else:
         tagList.append('rating: questionable')
 
-    return tagList
+    tagSet = set()
+    for tag in tagList:
+        tagSet.add(tag)
+        
+    return tagSet
 
 def getUrls(te:str):
     #Split te into entries
-    urls = list()
+    urls = set()
     entries = re.findall('match</th>.*similarity', te)
     for entry in entries:
         parsedEntry = parseEntry(entry)
         if parsedEntry['likeness'] > LIKENESS_LIMIT:
             for url in parsedEntry['urls']:
-                urls.append(url)
+                urls.add(url)
     return urls
 
 def parseEntry(entry:str):
@@ -105,9 +110,35 @@ def getInfoUrl(url):
     if rt == None:
         return None
 
-    allUrls = getUrls(rt)
-    allTags = getTags(rt)
+    urls = getUrls(rt)
+    tags = getTags(rt)
+    
+    #now that we have urls, pull tags from those sites
+    url:str
+    for url in urls:
+        if url.find('danbooru') != -1:
+            #get the id from the url and then pass it to DanbooruService
+            id = re.findall('\d+', url)[0]
+            danTags = DanbooruService.getTagsFromId(id)
+            for tag in danTags:
+                tags.add(tag)
+        elif url.find('gelbooru') != -1:
+            md5 = re.findall('md5=[\d|\w]+', url)[0]
+            md5 = md5[4:]
+            gelTags = GelbooruService.getTagsFromMD5(md5)
+            for tag in gelTags:
+                tags.add(tag)
+        elif url.find('e621') != -1:
+            print(url)
+            
+    
     return {
-        'tags': allTags,
-        'urls': allUrls
+        'tags': tags,
+        'urls': urls
     }
+
+if __name__ == "__main__":
+    data = getInfoUrl('https://cdn.discordapp.com/attachments/896265813630255138/965379505675980871/unknown.png')
+    tags = data['tags']
+    urls = data['urls']
+    print(f'Tags: {tags}')

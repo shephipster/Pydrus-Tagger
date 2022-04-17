@@ -475,21 +475,27 @@ async def ping_people(ctx, tag_list):
 		# else:
 		# 	if int(tmpUser.id) == ctx.message.author.id:
 		# 		continue
+  
 
-		if all(bTag not in tag_list for bTag in data[guid]['users'][user]['blacklist']):
+		cleaned_tags = list(tag_list)
+		for i in range(len(cleaned_tags)):
+			cleaned_tags[i] = Tagger.getCleanTag(cleaned_tags[i])
+
+		if all(bTag not in cleaned_tags for bTag in data[guid]['users'][user]['blacklist']):
 			if (pingTime - tmpUser.lastPing < tmpUser.pingDelay):
 				continue
 			else:
-				for tag in tag_list:
-					realTag = Tagger.getCleanTag(tag)
-					if realTag in tmpUser.tags and tmpUser not in loggedUsers:
+				for tag in cleaned_tags:
+					if tag in tmpUser.tags and tmpUser not in loggedUsers:
 						data[guid]['users'][str(tmpUser.id)]['lastPing'] = pingTime
 						loggedUsers.append(tmpUser)
-					# else:
-						# for combo in tmpUser.tagCombos:
-						# 	if all(Tagger.getCleanTag(tags) in tag_list for tags in combo) and tmpUser not in loggedUsers:
-						# 		data[guid]['users'][tmpUser.id]['lastPing'] = pingTime
-						# 		loggedUsers.append(tmpUser)
+					
+				for combo in tmpUser.tagCombos:
+					if all(combo_tag in cleaned_tags for combo_tag in combo):
+						if tmpUser not in loggedUsers:
+							data[guid]['users'][str(tmpUser.id)]['lastPing'] = pingTime
+							loggedUsers.append(tmpUser)
+
 		else:
 			continue
 
@@ -502,24 +508,24 @@ async def ping_people(ctx, tag_list):
 			message += f"<@{loopUser.id}>"
 			if loopUser.specifyTags:
 				message += " for "
-				for tag in tag_list:
+				for tag in cleaned_tags:
 					if tag in loopUser.tags:
-						message += f"`{Tagger.getCleanTag(tag)}`, "
-				# for combo in tmpUser.tagCombos:
-				# 	if all(Tagger.getCleanTag(tags) in tag_list for tags in combo):
-				# 		message += f"`{combo}`, "
-				# message = message[:-2]
+						message += f"`{tag}`, "
+				for combo in tmpUser.tagCombos:
+					if all(combo_tag in cleaned_tags for combo_tag in combo):
+						message += f"`{combo}`, "
+				message = message[:-2]
 		else:
 			message += f"{loopUser.name}"
 			if loopUser.specifyTags:
 				message += " for "
-				for tag in tag_list:
+				for tag in cleaned_tags:
 					if tag in loopUser.tags:
-						message += f"`{Tagger.getCleanTag(tag)}`, "
-				# for combo in tmpUser.tagCombos:
-				# 	if all(Tagger.getCleanTag(tags) in tag_list for tags in combo):
-				# 		message += f"`{combo}`, "
-				# message = message[:-2]
+						message += f"`{tag}`, "
+				for combo in tmpUser.tagCombos:
+					if all(combo_tag in cleaned_tags for combo_tag in combo):
+						message += f"`{combo}`, "
+				message = message[:-2]
 
 	if message != "":
 		await ctx.channel.send(message)
