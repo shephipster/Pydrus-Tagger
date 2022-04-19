@@ -19,7 +19,7 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-DEBUG = False
+DEBUG = True
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -126,14 +126,14 @@ async def source(ctx):
 			file = await attachment.to_file()
 			file = file.fp
 			data = IQDB.getInfoDiscordFile(file)
-			if data['error']:
+			if 'error' in data.keys():
 				await ctx.channel.send(f"Sorry, I had trouble finding that. You can try checking SauceNao here: {data['sauceNao_redirect']}")
 				return
 
 			url_list = data['urls']
 			output = "Found that image at the following sites:\n "
 			for url in url_list:
-				output = output + url + "\n"
+				output = output + "http://" + url + "\n"
 	
 			await ctx.channel.send(output)
 

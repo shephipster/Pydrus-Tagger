@@ -47,7 +47,7 @@ def refineText(r: requests.Response):
     return refinedText
 
 def getTags(refined: str):
-    dataRegex = "title=\"Rating: \w [Score: \d* Tags:[\w\s\(\)\:]*\""
+    dataRegex = "title=\"Rating: \w Score: \d Tags:[\sa-zA-Z0-9_\-\(\)]+\""
     ratingRegex = "Rating: \w"
     tagsRegex = "Tags: [\w\d _\(\)\:]*"
 
@@ -111,6 +111,10 @@ def getInfoDiscordFile(fp:io.BufferedIOBase):
             'sauceNao_redirect': redirection
         }
 
+    urls = getUrls(rt)
+    tags = getTags(rt)
+    
+    #now that we have urls, pull tags from those sites
     url:str
     for url in urls:
         if url.find('danbooru') != -1:
@@ -131,7 +135,7 @@ def getInfoDiscordFile(fp:io.BufferedIOBase):
     
     return {
         'tags': tags,
-        'urls': urls, 
+        'urls': urls
     }
 
 def getInfoFile(file):
@@ -141,6 +145,10 @@ def getInfoFile(file):
     if rt == None:
         return rt
 
+    urls = getUrls(rt)
+    tags = getTags(rt)
+    
+    #now that we have urls, pull tags from those sites
     url:str
     for url in urls:
         if url.find('danbooru') != -1:
@@ -204,7 +212,7 @@ def getSauceNaoLink(res:requests.Response):
     text = res.text
     regex = "saucenao.com/search.php\?db=999&dbmaski=32768&url=(https://iqdb.org/thu/[\w\d]+.\w{3})"
     url = re.findall(regex, text)[0]
-    url = "https://saucenao.com/search.php\?db=999&dbmaski=32768&url=" + url
+    url = "https://saucenao.com/search.php?db=999&dbmaski=32768&url=" + url
     return url
 
 if __name__ == "__main__":
