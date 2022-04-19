@@ -56,6 +56,13 @@ def getTagsFromMD5(md5):
 
     return tags
 
+def checkMD5(md5):
+    finalString = GELBOORU_MD5_URL.format(md5, '')
+    resp = requests.get(finalString)
+    respJson = resp.json()
+    if 'post' in respJson:
+        return md5
+
 def getRandomPostWithTags(*tags):
     tagList = ""
     for tag in tags[0]:

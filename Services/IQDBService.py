@@ -1,14 +1,25 @@
 import requests
 import re
 import os
+import hashlib
+import requests
+import io
 from . import DanbooruService, GelbooruService, E621Service
+
 
 URL = "https://iqdb.org"
 FILE_LIMIT = 8192000 #limit is 8192KB
 MAX_DIM = (7500,7500)
 LIKENESS_LIMIT = 80 #result must be at least this % similar to be counted
 
-def getFromFile(file):
+def getFromDiscordFile(fp):
+    body = {
+        'file': fp
+    }
+    r = requests.post(URL, files=body)
+    return r
+
+def getFromFile(file):  
     body = { 
         'file': (os.path.basename(file), open(file, 'rb'))
     }
@@ -89,26 +100,78 @@ def parseEntry(entry:str):
     }
     return entry
 
-def getInfo(file):
+def getInfoDiscordFile(fp:io.BufferedIOBase):
+    #urls
+    r = getFromDiscordFile(fp)
+    rt = refineText(r)    
+    if rt == None:
+        redirection = getSauceNaoLink(r)
+        return {
+            'error': True,
+            'sauceNao_redirect': redirection
+        }
+
+    url:str
+    for url in urls:
+        if url.find('danbooru') != -1:
+            #get the id from the url and then pass it to DanbooruService
+            id = re.findall('\d+', url)[0]
+            danTags = DanbooruService.getTagsFromId(id)
+            for tag in danTags:
+                tags.add(tag)
+        elif url.find('gelbooru') != -1:
+            md5 = re.findall('md5=[\d|\w]+', url)[0]
+            md5 = md5[4:]
+            gelTags = GelbooruService.getTagsFromMD5(md5)
+            for tag in gelTags:
+                tags.add(tag)
+        elif url.find('e621') != -1:
+            print(url)
+            
+    
+    return {
+        'tags': tags,
+        'urls': urls, 
+    }
+
+def getInfoFile(file):
     #urls
     r = getFromFile(file)
     rt = refineText(r)    
     if rt == None:
-        #It needs to be skipped
-        return None
+        return rt
 
-    allUrls = getUrls(rt)
-    allTags = getTags(rt)
+    url:str
+    for url in urls:
+        if url.find('danbooru') != -1:
+            #get the id from the url and then pass it to DanbooruService
+            id = re.findall('\d+', url)[0]
+            danTags = DanbooruService.getTagsFromId(id)
+            for tag in danTags:
+                tags.add(tag)
+        elif url.find('gelbooru') != -1:
+            md5 = re.findall('md5=[\d|\w]+', url)[0]
+            md5 = md5[4:]
+            gelTags = GelbooruService.getTagsFromMD5(md5)
+            for tag in gelTags:
+                tags.add(tag)
+        elif url.find('e621') != -1:
+            print(url)
+            
+    
     return {
-        'tags': allTags,
-        'urls': allUrls
+        'tags': tags,
+        'urls': urls
     }
 
 def getInfoUrl(url):
     r = getFromUrl(url)
     rt = refineText(r)
     if rt == None:
-        return None
+        r = requests.get(f'{url}', stream=True)
+        file = r.raw.read()      
+        md5 = hashlib.md5(file)
+        return GelbooruService.checkMD5(md5)
 
     urls = getUrls(rt)
     tags = getTags(rt)
@@ -136,6 +199,13 @@ def getInfoUrl(url):
         'tags': tags,
         'urls': urls
     }
+    
+def getSauceNaoLink(res:requests.Response):
+    text = res.text
+    regex = "saucenao.com/search.php\?db=999&dbmaski=32768&url=(https://iqdb.org/thu/[\w\d]+.\w{3})"
+    url = re.findall(regex, text)[0]
+    url = "https://saucenao.com/search.php\?db=999&dbmaski=32768&url=" + url
+    return url
 
 if __name__ == "__main__":
     data = getInfoUrl('https://cdn.discordapp.com/attachments/896265813630255138/965379505675980871/unknown.png')

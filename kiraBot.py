@@ -92,9 +92,10 @@ async def on_message(message):
 	if not message.content or message.content[0] != '+':
 		if message.attachments:
 			for attachment in message.attachments:
-				imageLink = attachment.url
-				data = IQDB.getInfoUrl(imageLink)
-				if data != None:
+				file = await attachment.to_file()
+				file = file.fp
+				data = IQDB.getInfoDiscordFile(file)
+				if data != None and not data['error']:
 					tag_list = data['tags']
 					await ping_people(message, tag_list)
 					if repostDetected(message.channel.guild, imageLink):
@@ -116,6 +117,25 @@ async def on_command_error(ctx, error):
 	print(error)
 	return
 
+@bot.command(aliases=['sauce', 'urls', 'sites'])
+async def source(ctx):
+	if not ctx.message.attachments:
+		await ctx.channel.send("You have to give me an image to look up you know.")
+	else:
+		for attachment in ctx.message.attachments:
+			file = await attachment.to_file()
+			file = file.fp
+			data = IQDB.getInfoDiscordFile(file)
+			if data['error']:
+				await ctx.channel.send(f"Sorry, I had trouble finding that. You can try checking SauceNao here: {data['sauceNao_redirect']}")
+				return
+
+			url_list = data['urls']
+			output = "Found that image at the following sites:\n "
+			for url in url_list:
+				output = output + url + "\n"
+	
+			await ctx.channel.send(output)
 
 @bot.command(aliases=['init'])
 async def initGuild(ctx):
