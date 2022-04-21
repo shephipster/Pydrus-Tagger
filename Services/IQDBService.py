@@ -49,29 +49,28 @@ def refineText(r: requests.Response):
 def getTags(refined: str):
     dataRegex = "title=\"Rating: \w Score: \d Tags:[\sa-zA-Z0-9_\-\(\)]+\""
     ratingRegex = "Rating: \w"
-    tagsRegex = "Tags: [\w\d _\(\)\:]*"
+    tagsRegex = "Tags: [\w\d _\(\)\:\\\/\-]*"
+    
+    tagSet = set()
 
     data = re.findall(dataRegex, refined)
-    if len(data) == 0:
-        #empty data, most likely dealing with additional matches when there were none
-        return [], []
+    if len(data) != 0:
+        tags = re.findall(tagsRegex, data[0])
+        tagList = tags[0][6:].split(' ')
+    
+        ratingLetter = re.findall(ratingRegex, data[0])
+        ratingChar = ratingLetter[0][-1:]
 
-    tags = re.findall(tagsRegex, data[0])
-    tagList = tags[0][6:].split(' ')
-  
-    ratingLetter = re.findall(ratingRegex, data[0])
-    ratingChar = ratingLetter[0][-1:]
+        if ratingChar == 'e':
+            tagList.append('rating: explicit')
+        elif ratingChar == 's':
+            tagList.append('rating: safe')
+        else:
+            tagList.append('rating: questionable')
 
-    if ratingChar == 'e':
-        tagList.append('rating: explicit')
-    elif ratingChar == 's':
-        tagList.append('rating: safe')
-    else:
-        tagList.append('rating: questionable')
-
-    tagSet = set()
-    for tag in tagList:
-        tagSet.add(tag)
+        
+        for tag in tagList:
+            tagSet.add(tag)
         
     return tagSet
 

@@ -252,7 +252,7 @@ class Processor(Thread):
             try:
                 if isValidFile(HydrusApi.getMetaFromHash(fileHash)):
                     image = HydrusApi.getImageByHash(fileHash)
-                    data = IQDB.getInfo(image)
+                    data = IQDB.getInfoFile(image)
                     if not data == None:  
                         self.processFile(data, fileHash)
                 else:
@@ -260,7 +260,7 @@ class Processor(Thread):
             except Exception as e:
                  print("Exception:", e)
                  print("Failed hash:", fileHash)
-                 print(f'{fileHash}\n', file = open('tempFiles/failedHashes.txt', 'a', encoding='utf-8'))
+                 print(f'{fileHash}', file = open('tempFiles/failedHashes.txt', 'a', encoding='utf-8'))
             finally:    
                 fio.addHash(fileHash)
                 self.filesToHandle.remove(fileHash)            
@@ -272,7 +272,6 @@ class Processor(Thread):
                 time.sleep(5) 
                 if self.count % 50 == 0:
                     time.sleep(25)
-        self.join()
 
     def processFile(self, data, hash):
         tags = data['tags']
