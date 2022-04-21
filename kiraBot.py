@@ -19,7 +19,7 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-DEBUG = True
+DEBUG = False
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
