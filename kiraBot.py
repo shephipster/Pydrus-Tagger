@@ -22,7 +22,7 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-DEBUG = true
+DEBUG = True
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -761,32 +761,58 @@ async def randomPost(ctx, *tags):
 		poster = ctx.message.author.display_name
 		await ctx.channel.send(f"{poster} just rolled porn!", tts=True)
   
-	description = post['title'] + "\n" + post['source']
-	if description == None or description == "":
-		description = '`' + ",".join(cleaned_tags) + '`'
-  
+	#send the initial embed, reverse search for urls will take time
+	
 	bot_avatar = bot.user.avatar_url
 	bot_image = bot_avatar.BASE + bot_avatar._url
-
+	post_id = post['id']
+	description = post['source'] + f'\nhttps://gelbooru.com/index.php?page=post&s=view&id={ post_id }'
 	embed_obj = discord.Embed(
   		colour=discord.Colour(0x5f4396),
 		description=description,
-		type="rich"
+		type="rich",
 	)
-
 	embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
 	embed_obj.set_image(url=post['file_url'])
-
-	#TODO: See if it's possible to spoiler an embed
+ 
 	await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
 	if isExplicit and not ctx.channel.is_nsfw():
-		await ctx.channel.send("||" + post['file_url'] + "||")
+		embed_msg = await ctx.channel.send("||" + post['file_url'] + "||")
 	else:
-		await ctx.channel.send(embed=embed_obj)
+		embed_msg = await ctx.channel.send(embed=embed_obj) 
+ 
+	extra_data = IQDB.getInfoUrl(post['file_url'])
+	sources = []
+	for url in extra_data['urls']:
+		sources.append(url)
   
-	#if image is over 8mb for a non-boosted server try and get the thumbnail too
-
-	#Double pings are occuring, might need investigation
+  
+	if post['source'] not in sources:
+		sources.append(post['source'])
+  
+	if f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }' not in sources:
+		sources.append(f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }')
+  
+	for i in range(len(sources)):
+		if not sources[i].startswith('https://'):
+			sources[i] = "https://" + sources[1]
+  
+	description = '\n'.join(sources)
+  
+	#delete old embed and replace with new one that has more links
+	await embed_msg.delete()
+	embed_obj = discord.Embed(
+  		colour=discord.Colour(0x5f4396),
+		description=description,
+		type="rich",
+	)
+	embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+	embed_obj.set_image(url=post['file_url'])
+	if isExplicit and not ctx.channel.is_nsfw():
+			embed_msg = await ctx.channel.send("||" + post['file_url'] + "||")
+	else:
+			embed_msg = await ctx.channel.send(embed=embed_obj) 
+	
 	await ping_people(ctx, tag_list)
 
 	return
