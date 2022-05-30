@@ -1,3 +1,4 @@
+from io import BytesIO
 import discord
 import requests
 import json
@@ -5,9 +6,11 @@ import time
 import imagehash
 import os
 import re
+import shutil
 
 from random import choice, choices, randint
 from dotenv import load_dotenv
+from Services import TwitterService
 from Services.GelbooruService import getRandomPostWithTags
 from Utilities.Tagger import Tagger
 
@@ -19,7 +22,7 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-DEBUG = False
+DEBUG = true
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -38,6 +41,12 @@ repostDistance = 10  # how similar an image must be to be a repost. Smaller mean
 JOKE_MODE = False
 POLL_LIMIT = 10  # maximum number of items allowed in a poll
 
+#what people put before 'twitter' in a url to fix it. 
+# NOTE: this is not like fx/vx twitter. It doesn't actually host the url, it instead make it's own embed using
+# data it finds at the twitter url given. So if you post something and then add the prefix the bot will follow
+# up with a custom-made embed that contains the content as best it can
+EMBED_FIX_PREFIX = 'kira' 
+
 intents = discord.Intents.default()
 intents.members = True
 intents.messages = True
@@ -48,6 +57,7 @@ bot = commands.Bot(command_prefix='+',
 
 logFile = './kiraBotFiles/imageLog.json'
 guildsFile = './kiraBotFiles/guilds.json'
+tempImageLoc = './kiraBotFiles/'
 
 pic_ext = ['.jpg', '.png', '.gif', '.jpeg', '.bmp']
 ROLL_LIMIT = 10
@@ -109,8 +119,59 @@ async def on_message(message):
 					await ping_people(message, tag_list)
 					if repostDetected(message.channel.guild, imageLink):
 						await message.add_reaction(str('♻️'))
-	await bot.process_commands(message)
 
+	await bot.process_commands(message)
+ 
+@bot.event
+async def on_message_edit(before, after):
+    #If a message is edited from a standard Twitter link to a custom one, the bot will create an embed and post it in the channel. While not as pretty as vx/fx twitter, it doesn't rely on external websites
+	#and everything is in-memory so it's not physically capable of spying on what you use it for. Other sites to come. Pixiv would be next but they don't have an api so...
+	if re.search(f"https?://twitter.com/[\S]+/status/[0-9]+(\?[\S]+)*", before.content) != None and re.search(f"https?://{EMBED_FIX_PREFIX}twitter.com/[\D]+/status/[0-9]+(\?[\S]+)*", after.content) != None:
+		parsed_text = re.search(f"(https?://twitter.com/[\S]+/status/[0-9]+)(\?[\S]+)*", before.content)
+		parsed_text = parsed_text.group(1)
+		tweet_meta = TwitterService.get_tweet_meta_from_link(parsed_text)
+		embed_type = TwitterService.tweetType(tweet_meta['raw_data'])
+
+		media = []
+		media_urls = []
+		for entry in tweet_meta['raw_data']['includes']['media']:
+			media.append(entry)
+			media_urls.append(entry['url'])
+   
+		finalImage = TwitterService.genImageFromURL(media_urls)
+		imgIo = BytesIO()
+		finalImage = finalImage.convert("RGB")
+		finalImage.save(imgIo, 'JPEG', quality=70)
+		imgIo.seek(0)
+		tempFile = discord.File(fp=imgIo, filename="image.jpeg")
+  
+		#create the custom embed
+  		#TODO: Replace avatar/image with the twitter poster's
+		bot_avatar = bot.user.avatar_url
+		bot_image = bot_avatar.BASE + bot_avatar._url
+  
+		#TODO: include more info if need be
+		body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
+
+		embed_obj = discord.Embed(
+			colour=discord.Colour(0x5f4396),
+			description=body,
+			type="rich",
+			url=parsed_text,
+		)
+
+		embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+	
+		#TODO: Pull a temp local copy of the image since just using the twitter image doesn't work
+		# image_display_url = tweet_meta['raw_data']['entities']['urls'][0]['display_url']
+		# res = requests.get("http://" + image_display_url, stream=True)
+		# if res.status_code == 200:
+		# 	with open(tempImageLoc, 'wb') as f:
+		# 		res.raw.decode_content = True
+		# 		shutil.copyfileobj(res.raw, f)
+  
+		embed_obj.set_image(url="attachment://image.jpeg")
+		await after.channel.send(file=tempFile, embed=embed_obj)
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -648,6 +709,10 @@ async def randomPost(ctx, *tags):
 		#there was an issue, break
 		return
 
+	cleaned_tags = []
+	for tag in tags:
+		cleaned_tags.append(tag.replace('`',''))
+
 	guid = str(ctx.guild.id)
 	cid = str(ctx.channel.id)
 	bannedTags = []
@@ -666,7 +731,7 @@ async def randomPost(ctx, *tags):
 		roll = False
 
 		#Get the random post and all it's data.
-		post = getRandomPostWithTags(tags)
+		post = getRandomPostWithTags(cleaned_tags)
 		if post == None:
 			await ctx.channel.send(f"Couldn't find anything, one or more of your tags might just not exist.")
 			return
@@ -695,12 +760,31 @@ async def randomPost(ctx, *tags):
 	if JOKE_MODE and isExplicit:
 		poster = ctx.message.author.display_name
 		await ctx.channel.send(f"{poster} just rolled porn!", tts=True)
+  
+	description = post['title'] + "\n" + post['source']
+	if description == None or description == "":
+		description = '`' + ",".join(cleaned_tags) + '`'
+  
+	bot_avatar = bot.user.avatar_url
+	bot_image = bot_avatar.BASE + bot_avatar._url
 
+	embed_obj = discord.Embed(
+  		colour=discord.Colour(0x5f4396),
+		description=description,
+		type="rich"
+	)
+
+	embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+	embed_obj.set_image(url=post['file_url'])
+
+	#TODO: See if it's possible to spoiler an embed
 	await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
 	if isExplicit and not ctx.channel.is_nsfw():
-		await ctx.channel.send("|| " + image + " ||")
+		await ctx.channel.send("||" + post['file_url'] + "||")
 	else:
-		await ctx.channel.send(image)
+		await ctx.channel.send(embed=embed_obj)
+  
+	#if image is over 8mb for a non-boosted server try and get the thumbnail too
 
 	#Double pings are occuring, might need investigation
 	await ping_people(ctx, tag_list)

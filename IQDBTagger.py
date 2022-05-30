@@ -280,7 +280,10 @@ class Processor(Thread):
             if not url.startswith("http://") and not url.startswith("https://"):
                 url = "http://" + url
             HydrusApi.addKnownURLToFileByHash(hash, url)
-            HydrusApi.uploadURL(str(url), title="PyQDB")
+            #Omit urls of anime-pictures, e-shuushuu ,  and zerochan . They pretty much always fails and slow down Hydrus processing
+            ignored_urls = ['zerochan','e-shuushuu', 'anime-pictures']
+            if not any(iurl in str(url) for iurl in ignored_urls):
+                HydrusApi.uploadURL(str(url), title="PyQDB")
         for tag in tags:
             HydrusApi.addTagByHash(hash, tag)
 
