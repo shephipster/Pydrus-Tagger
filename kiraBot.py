@@ -22,7 +22,7 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-DEBUG = True
+DEBUG = False
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -161,14 +161,6 @@ async def on_message_edit(before, after):
 		)
 
 		embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
-	
-		#TODO: Pull a temp local copy of the image since just using the twitter image doesn't work
-		# image_display_url = tweet_meta['raw_data']['entities']['urls'][0]['display_url']
-		# res = requests.get("http://" + image_display_url, stream=True)
-		# if res.status_code == 200:
-		# 	with open(tempImageLoc, 'wb') as f:
-		# 		res.raw.decode_content = True
-		# 		shutil.copyfileobj(res.raw, f)
   
 		embed_obj.set_image(url="attachment://image.jpeg")
 		await after.channel.send(file=tempFile, embed=embed_obj)
@@ -185,18 +177,38 @@ async def source(ctx):
 	else:
 		for attachment in ctx.message.attachments:
 			file = await attachment.to_file()
+			file_url = attachment.url
 			file = file.fp
 			data = IQDB.getInfoDiscordFile(file)
 			if 'error' in data.keys():
 				await ctx.channel.send(f"Sorry, I had trouble finding that. You can try checking SauceNao here: {data['sauceNao_redirect']}")
 				return
 
-			url_list = data['urls']
-			output = "Found that image at the following sites:\n "
-			for url in url_list:
-				output = output + "http://" + url + "\n"
+			cleaned_urls = []
+			for url in data['urls']:
+				if re.match('https?://', url) == None:
+					cleaned_urls.append('https://' + url)
+				else:
+					cleaned_urls.append(url)
+
+			description = "Sources:\n" + '\n'.join(cleaned_urls)
+			bot_avatar = bot.user.avatar_url
+			bot_image = bot_avatar.BASE + bot_avatar._url
+			embed_obj = discord.Embed(
+				colour=discord.Colour(0x5f4396),
+				description=description,
+				type="rich",
+			)
+			embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+			embed_obj.set_image(url=file_url)
+
+			# url_list = data['urls']
+			# output = "Found that image at the following sites:\n "
+			# for url in url_list:
+			# 	output = output + "http://" + url + "\n"
 	
-			await ctx.channel.send(output)
+			# await ctx.channel.send(output)
+			await ctx.channel.send(embed=embed_obj)
 
 @bot.command(aliases=['init'])
 async def initGuild(ctx):
@@ -782,7 +794,7 @@ async def randomPost(ctx, *tags):
 		embed_msg = await ctx.channel.send(embed=embed_obj) 
  
 	extra_data = IQDB.getInfoUrl(post['file_url'])
-	sources = []
+	sources = [f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }', post['source']]
 	for url in extra_data['urls']:
 		sources.append(url)
   
@@ -794,8 +806,8 @@ async def randomPost(ctx, *tags):
 		sources.append(f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }')
   
 	for i in range(len(sources)):
-		if not sources[i].startswith('https://'):
-			sources[i] = "https://" + sources[1]
+		if re.match('https?://', sources[i]) == None:
+			sources[i] = "https://" + sources[i]
   
 	description = '\n'.join(sources)
   
