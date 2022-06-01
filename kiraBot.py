@@ -12,6 +12,8 @@ from random import choice, choices, randint
 from dotenv import load_dotenv
 from Services import TwitterService
 from Services.GelbooruService import getRandomPostWithTags
+from Services.GelbooruService import getRandomSetWithTags as gelSet
+from Services.DanbooruService import getRandomSetWithTags as danSet
 from Utilities.Tagger import Tagger
 
 import Utilities.TagAPI as TagAPI
@@ -105,10 +107,11 @@ async def on_message(message):
 				file = await attachment.to_file()
 				file = file.fp
 				data = IQDB.getInfoDiscordFile(file)
-				if data != None and not data['error']:
+				if data != None and not 'error' in data:
 					tag_list = data['tags']
 					await ping_people(message, tag_list)
-					if repostDetected(message.channel.guild, imageLink):
+
+					if repostDetected(message.channel.guild, attachment.url):
 						await message.add_reaction(str('♻️'))
 		elif message.embeds:
 			for embed in message.embeds:
@@ -134,36 +137,60 @@ async def on_message_edit(before, after):
 
 		media = []
 		media_urls = []
+		is_gif = False
 		for entry in tweet_meta['raw_data']['includes']['media']:
 			media.append(entry)
-			media_urls.append(entry['url'])
+			if entry['type'] == 'animated_gif':
+				media_urls.append(entry['variants'][0]['url'])
+				is_gif = True
+			else:
+				media_urls.append(entry['url'])
    
-		finalImage = TwitterService.genImageFromURL(media_urls)
-		imgIo = BytesIO()
-		finalImage = finalImage.convert("RGB")
-		finalImage.save(imgIo, 'JPEG', quality=70)
-		imgIo.seek(0)
-		tempFile = discord.File(fp=imgIo, filename="image.jpeg")
-  
-		#create the custom embed
-  		#TODO: Replace avatar/image with the twitter poster's
-		bot_avatar = bot.user.avatar_url
-		bot_image = bot_avatar.BASE + bot_avatar._url
-  
-		#TODO: include more info if need be
-		body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
+		if not is_gif:
+			finalImage = TwitterService.genImageFromURL(media_urls)
+			imgIo = BytesIO()
+			finalImage = finalImage.convert("RGB")
+			finalImage.save(imgIo, 'JPEG', quality=70)
+			imgIo.seek(0)
+			tempFile = discord.File(fp=imgIo, filename="image.jpeg")
+	
+			#create the custom embed
+			#TODO: Replace avatar/image with the twitter poster's
+			bot_avatar = bot.user.avatar_url
+			bot_image = bot_avatar.BASE + bot_avatar._url
+	
+			#TODO: include more info if need be
+			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
 
-		embed_obj = discord.Embed(
-			colour=discord.Colour(0x5f4396),
-			description=body,
-			type="rich",
-			url=parsed_text,
-		)
+			embed_obj = discord.Embed(
+				colour=discord.Colour(0x5f4396),
+				description=body,
+				type="rich",
+				url=parsed_text,
+			)
 
-		embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
-  
-		embed_obj.set_image(url="attachment://image.jpeg")
-		await after.channel.send(file=tempFile, embed=embed_obj)
+			embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+	
+			embed_obj.set_image(url="attachment://image.jpeg")
+			await after.channel.send(file=tempFile, embed=embed_obj)
+		else:
+			bot_avatar = bot.user.avatar_url
+			bot_image = bot_avatar.BASE + bot_avatar._url
+	
+			#TODO: include more info if need be
+			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
+
+			embed_obj = discord.Embed(
+				colour=discord.Colour(0x5f4396),
+				description=body,
+				type="rich",
+				url=parsed_text,
+			)
+			embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+	
+			embed_obj.set_image(url=media_urls[0])
+			await after.channel.send(embed=embed_obj)
+			await after.channel.send(media_urls[0])
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -210,7 +237,7 @@ async def source(ctx):
 			# await ctx.channel.send(output)
 			await ctx.channel.send(embed=embed_obj)
 
-@bot.command(aliases=['init'])
+@bot.command(aliases=['init', 'initServer'])
 async def initGuild(ctx):
 	#for each file, if guild not already part of it add them
 	if type(ctx.channel) == discord.channel.DMChannel:
@@ -742,16 +769,27 @@ async def randomPost(ctx, *tags):
 	while roll:
 		roll = False
 
-		#Get the random post and all it's data.
-		post = getRandomPostWithTags(cleaned_tags)
-		if post == None:
-			await ctx.channel.send(f"Couldn't find anything, one or more of your tags might just not exist.")
-			return
-		#We already have the tags, get them and then ping people
-
-		tag_list = post['tags'].split()
-		image = post['file_url']
-		isExplicit = post['rating'] == 'explicit'
+		randomDanSet = danSet(cleaned_tags)
+		randomGelSet = gelSet(cleaned_tags)['post']
+  
+		danWeight = len(randomDanSet)
+		gelWeight = len(randomGelSet)
+		totalWeight = danWeight + gelWeight
+		rolled_number = randint(0,totalWeight)
+  
+		if rolled_number <= danWeight:
+			random_item = (randomDanSet[rolled_number], 'dan')
+		elif rolled_number - danWeight <= gelWeight:
+			random_item = (randomGelSet[rolled_number-danWeight], 'gel')
+   
+		if random_item[1] == 'dan':
+			tag_list = random_item[0]['tag_string'].split()
+			image_url = random_item[0]['file_url']
+			isExplicit = random_item[0]['rating'] == 'e'
+		elif random_item[1] == 'gel':
+			tag_list = random_item[0]['tags'].split()
+			image_url = random_item[0]['file_url']
+			isExplicit = random_item[0]['rating'] == 'explicit'
 
 		#Safety filter, if it's loli and explicit re-roll that junk
 		for tag in tag_list:
@@ -777,33 +815,40 @@ async def randomPost(ctx, *tags):
 	
 	bot_avatar = bot.user.avatar_url
 	bot_image = bot_avatar.BASE + bot_avatar._url
-	post_id = post['id']
-	description = post['source'] + f'\nhttps://gelbooru.com/index.php?page=post&s=view&id={ post_id }'
+
+	if random_item[1] == 'gel' :
+		post_id = random_item[0]['id']
+		description = random_item[0]['source'] + f'\nhttps://gelbooru.com/index.php?page=post&s=view&id={ post_id }'
+		image_url = random_item[0]['file_url']
+	elif random_item[1] == 'dan':
+		post_id = random_item[0]['id']
+		description = random_item[0]['source'] + f'\nhttps://danbooru.donmai.us/posts/{post_id}'
+		image_url = random_item[0]['file_url']
+   
+   
 	embed_obj = discord.Embed(
   		colour=discord.Colour(0x5f4396),
 		description=description,
 		type="rich",
 	)
 	embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
-	embed_obj.set_image(url=post['file_url'])
+	embed_obj.set_image(url=image_url)
  
 	await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
 	if isExplicit and not ctx.channel.is_nsfw():
-		embed_msg = await ctx.channel.send("||" + post['file_url'] + "||")
+		embed_msg = await ctx.channel.send("||" + image_url + "||")
 	else:
 		embed_msg = await ctx.channel.send(embed=embed_obj) 
  
-	extra_data = IQDB.getInfoUrl(post['file_url'])
-	sources = [f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }', post['source']]
-	for url in extra_data['urls']:
-		sources.append(url)
+	extra_data = IQDB.getInfoUrl(image_url)
+	sources = []
+	if extra_data != None:
+		for url in extra_data['urls']:
+			sources.append(url)
   
   
-	if post['source'] not in sources:
-		sources.append(post['source'])
-  
-	if f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }' not in sources:
-		sources.append(f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }')
+	if random_item[0]['source'] not in sources:
+		sources.append(random_item[0]['source'])
   
 	for i in range(len(sources)):
 		if re.match('https?://', sources[i]) == None:
@@ -819,9 +864,9 @@ async def randomPost(ctx, *tags):
 		type="rich",
 	)
 	embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
-	embed_obj.set_image(url=post['file_url'])
+	embed_obj.set_image(url=image_url)
 	if isExplicit and not ctx.channel.is_nsfw():
-			embed_msg = await ctx.channel.send("||" + post['file_url'] + "||")
+			embed_msg = await ctx.channel.send("||" + image_url + "||")
 	else:
 			embed_msg = await ctx.channel.send(embed=embed_obj) 
 	
@@ -837,7 +882,7 @@ async def randomNSFW(ctx, *tags):
 
 @bot.command(aliases=['randomSFW', 'randomClean'])
 async def randomSafe(ctx, *tags):
-	await randomPost(ctx, 'rating:safe', *tags)
+	await randomPost(ctx, 'rating:general', *tags)
 
 
 @bot.command()
@@ -1593,5 +1638,42 @@ async def unbanNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
 		json.dump(guilds, dataFile, indent=4)
 
 	await ctx.channel.send(f"Okay, I can roll stuff in <#{channel.id}> that's porn and has {tags} now")
+
+
+# @bot.command()
+# async def multiEmbedTest(ctx):
+#     #seems like only webhooks allow for multiple embeds in one message, and that's the trick to multiple images
+#     #in a single embed best I can figure
+# 	bot_avatar = bot.user.avatar_url
+# 	bot_image = bot_avatar.BASE + bot_avatar._url
+ 
+# 	payload = {
+# 		"username": "Kira Bot",
+# 		"avatar_url": bot_image,
+# 	}
+ 
+# 	bot_avatar = bot.user.avatar_url
+# 	bot_image = bot_avatar.BASE + bot_avatar._url
+
+# 	payload['embeds'] = [
+# 			{
+# 				# 'url':'shephipster.ddns.net',
+# 				'image':{
+#         			'url':'https://www.pixiv.net/en/artworks/56829205',
+# 				},
+# 				'title': "TEST",
+# 				'description':'Test of multiple embeds via webhooks',
+# 				'color':0x5f4396,
+# 			},
+# 			{
+# 				# 'url':'shephipster.ddns.net',
+# 				'image':{
+#         			'url': 'https://www.pixiv.net/en/artworks/56556538'
+# 				},
+# 			}
+# 		]
+# 	webhook = 'https://discord.com/api/webhooks/981027107289305098/t2fHCjpf-sOpqUGUcA0w2D5k45a3gVx0dvYisvxFKnBC94cFL1iIi5Ur6cnfjgPE_LUT'
+# 	res = requests.post(webhook, json=payload)
+# 	print(res)
 
 bot.run(TOKEN)

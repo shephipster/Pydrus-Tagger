@@ -63,6 +63,15 @@ def checkMD5(md5):
     if 'post' in respJson:
         return md5
 
+def getRandomSetWithTags(*tags):
+    tagList = ""
+    for tag in tags[0]:
+        tagList += tag + " "
+    tagList = tagList[:-1]
+    resp = requests.get("http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&limit=9999&tags=" + tagList)
+    respJson = resp.json()
+    return respJson
+
 def getRandomPostWithTags(*tags):
     tagList = ""
     for tag in tags[0]:

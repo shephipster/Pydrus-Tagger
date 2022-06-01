@@ -56,7 +56,7 @@ def get_tweet_meta_from_link(url:str):
     id = re.match('https?://twitter.com/[a-zA-Z0-9_]+/status/([0-9]+)', url)
     if id != None:           
         id = id.group(1)
-        url = f'https://api.twitter.com/2/tweets/{id}?tweet.fields=attachments,author_id,context_annotations,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld&expansions=attachments.media_keys&media.fields=duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width,alt_text'
+        url = f'https://api.twitter.com/2/tweets/{id}?tweet.fields=attachments,author_id,context_annotations,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld&expansions=attachments.media_keys&media.fields=duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width,alt_text,variants'
         headers = create_headers()
         data = connect_to_endpoint(url, headers)
         
@@ -124,6 +124,8 @@ def combineImages(imageArray, totalWidth, totalHeight,pad=True):
     x = 0
     y = 0
     if (len(imageArray) == 1): # if there is only one image, just return it
+        if imageArray[0].mode == 'RGB':
+            return imageArray[0].convert('RGBA')
         return imageArray[0]
     # image generation is needed
     topImg = findImageWithMostPixels(imageArray)
