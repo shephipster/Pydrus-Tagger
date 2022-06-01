@@ -272,7 +272,7 @@ async def tagMe(ctx, *tags):
 
 	for tag in tags:
 		if tag not in user.tags:
-			user.tags.append(tag)
+			user.tags.append(tag.lower())
 
 	with open(guildsFile, "w") as dataFile:
 		json.dump(data, dataFile, indent=4)
@@ -1672,7 +1672,7 @@ async def unbanNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
 # 				},
 # 			}
 # 		]
-# 	webhook = 'https://discord.com/api/webhooks/981027107289305098/t2fHCjpf-sOpqUGUcA0w2D5k45a3gVx0dvYisvxFKnBC94cFL1iIi5Ur6cnfjgPE_LUT'
+
 # 	res = requests.post(webhook, json=payload)
 # 	print(res)
 
