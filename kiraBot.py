@@ -1,3 +1,4 @@
+import asyncio
 from io import BytesIO
 import discord
 import requests
@@ -24,7 +25,7 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-DEBUG = False
+DEBUG = True
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -55,7 +56,7 @@ intents.messages = True
 intents.guild_messages = True
 intents.dm_messages = True
 bot = commands.Bot(command_prefix='+',
-                   description=description, intents=intents)
+                   description=description, intents=intents, case_insensitive=True)
 
 logFile = './kiraBotFiles/imageLog.json'
 guildsFile = './kiraBotFiles/guilds.json'
@@ -263,7 +264,7 @@ async def initGuild(ctx):
 	return
 
 
-@bot.command(aliases=['tagme', 'addTag', 'addtag'])
+@bot.command(aliases=['addtag'])
 async def tagMe(ctx, *tags):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -281,7 +282,7 @@ async def tagMe(ctx, *tags):
 	return
 
 
-@bot.command(aliases=['untag', 'untagme', 'removeTag'])
+@bot.command(aliases=['untag', 'removeTag'])
 async def untagMe(ctx, *tags):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -367,7 +368,7 @@ async def nickname(ctx, name):
 	await ctx.channel.send(confirm)
 
 
-@bot.command(aliases=['mytags', 'myTags', 'taglist'])
+@bot.command(aliases=['mytags', 'taglist'])
 async def checkTags(ctx):
 	user, data = await processUser(ctx)
 	if user == None or data == None:
@@ -380,7 +381,7 @@ async def checkTags(ctx):
 	await ctx.channel.send(response)
 
 
-@bot.command(aliases=['ping', 'pingMe', 'pingme'])
+@bot.command(aliases=['ping', 'pingme'])
 async def setPing(ctx, state):
 
 	ping = True
@@ -691,7 +692,7 @@ async def getTagsFor(ctx):
 			await ctx.channel.send(output[:-2])
 
 
-@bot.command(aliases=['delay', 'setdelay', 'setDelay'])
+@bot.command(aliases=['delay', 'setdelay'])
 async def changeDelay(ctx, delay):
 	"""Sets how long to wait between pings. Takes how many seconds to wait before each ping."""
 
@@ -966,7 +967,7 @@ def postExpired(timePosted: float):
 	return time.time() - timePosted >= postTTL
 
 
-@bot.command(aliases=['deleteMessage', 'deletePost', 'deletepost', 'removePost', 'removepost'])
+@bot.command(aliases=['deleteMessage', 'deletepost', 'removepost', 'delete'])
 async def removeMessage(ctx, id):
 	message = await ctx.channel.fetch_message(id)
 
@@ -1267,7 +1268,7 @@ async def poll(ctx, *options):
 	return msg, pollMap
 
 
-@bot.command(aliases=['timedpoll', 'timepoll', 'limitpoll', 'limitedpoll'])
+@bot.command(aliases=['timepoll', 'limitpoll', 'limitedpoll'])
 async def timedPoll(ctx, seconds, *options):
 
 	try:
@@ -1279,7 +1280,7 @@ async def timedPoll(ctx, seconds, *options):
 	results = dict()
 	msg: discord.Message
 	msg, pollMap = await poll(ctx, *options)
-	time.sleep(int(seconds))
+	await asyncio.sleep(int(seconds))
 	msg = await ctx.channel.fetch_message(msg.id)
 	for reaction in msg.reactions:
 		if reaction.count not in results.keys():
@@ -1675,5 +1676,86 @@ async def unbanNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
 
 # 	res = requests.post(webhook, json=payload)
 # 	print(res)
+
+@bot.command(aliases=['selection', 'lottery'])
+async def giveaway(ctx, winners, time, *allowed_roles):
+    #get the number of winners
+    num_winners = int(winners)
+    #get the giveaway time, default to minutes
+    if time.isdigit():
+        delay = int(time) * 60
+    else:
+        if re.search('(\d+)m', time) != None:
+            delay = int(re.search('(\d+)', time).group(1)) * 60
+        elif re.search('(\d+)s', time) != None:
+            delay = int(re.search('(\d+)', time).group(1))
+        elif re.search('(\d+)h', time) != None:
+            delay = int(re.search('(\d+)', time).group(1)) * 3600
+    print(delay)
+    #get what roles can enter
+    available_roles = []
+    available_roles_mentions = []
+    if allowed_roles == ():
+        for gr in ctx.guild.roles:
+            if gr.name == '@everyone':
+                available_roles.append(gr)
+                available_roles_mentions.append(gr.mention)
+                break
+    else:
+        for role in allowed_roles:
+            role_id = int(role[3:-1])
+            for gr in ctx.guild.roles:
+                if gr.id == role_id:
+                    available_roles.append(gr)
+                    available_roles_mentions.append(gr.mention)
+	
+    roles_string = ','.join(available_roles_mentions)
+    
+    description = f'{ctx.author.name} is running a lottery!\n{winners} lucky winners will be selected from those that ' \
+        + f'click the 🎁 reaction below so long as you are {roles_string}.\nBetter hurry up though, it will only last for so long!'
+    bot_avatar = bot.user.avatar_url
+    bot_image = bot_avatar.BASE + bot_avatar._url
+    embed_obj = discord.Embed(
+		colour=discord.Colour(0x5f4396),
+		description=description,
+		type="rich",
+	)
+    embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+    msg = await ctx.channel.send(embed=embed_obj)
+    await msg.add_reaction(str('🎁'))
+    
+    await asyncio.sleep(int(delay))
+    msg = await ctx.channel.fetch_message(msg.id)	#update message with those that reacted
+    reactors = await msg.reactions[0].users().flatten()
+    #available
+    can_be_selected = []
+    for person in reactors:
+        if person.bot == False and any(role in available_roles for role in person.roles):
+            can_be_selected.append(person)
+            
+    #get W random winners, do NOT allow repeats
+    if can_be_selected == []:
+        await ctx.channel.send("There were no winners this time around. If you entered, make sure you have one of the roles for the lottery.")
+        return
+    
+    picked = list()
+    for x in range(len(can_be_selected)):
+        if can_be_selected == []:
+            #out of people, done
+            break
+        item = choice(can_be_selected)
+        picked.append(item)
+        can_be_selected.remove(item)
+    
+    await msg.delete()
+    
+    message = f'Selection is over! Will the following people please message {ctx.message.author.mention} for the follow-up.'
+    winner_mentions = []
+    for winner in picked:
+        winner_mentions.append(winner.mention)
+    
+    winners_string = ",".join(winner_mentions)
+    message += "\n" + winners_string
+    await ctx.channel.send(message)
 
 bot.run(TOKEN)
