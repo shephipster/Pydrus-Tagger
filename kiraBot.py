@@ -44,11 +44,11 @@ repostDistance = 10  # how similar an image must be to be a repost. Smaller mean
 JOKE_MODE = False
 POLL_LIMIT = 10  # maximum number of items allowed in a poll
 
-#what people put before 'twitter' in a url to fix it. 
+#what people put before 'twitter' in a url to fix it.
 # NOTE: this is not like fx/vx twitter. It doesn't actually host the url, it instead make it's own embed using
 # data it finds at the twitter url given. So if you post something and then add the prefix the bot will follow
 # up with a custom-made embed that contains the content as best it can
-EMBED_FIX_PREFIX = 'kira' 
+EMBED_FIX_PREFIX = 'kira'
 
 intents = discord.Intents.default()
 intents.members = True
@@ -65,10 +65,12 @@ tempImageLoc = './kiraBotFiles/'
 pic_ext = ['.jpg', '.png', '.gif', '.jpeg', '.bmp']
 ROLL_LIMIT = 10
 
+
 @bot.event
 async def on_guild_join(guild):
-	print("Joined guild", guild)  
+	print("Joined guild", guild)
 	await updateGuildCommand(guild)
+
 
 @bot.event
 async def on_ready():
@@ -125,13 +127,15 @@ async def on_message(message):
 						await message.add_reaction(str('♻️'))
 
 	await bot.process_commands(message)
- 
+
+
 @bot.event
 async def on_message_edit(before, after):
     #If a message is edited from a standard Twitter link to a custom one, the bot will create an embed and post it in the channel. While not as pretty as vx/fx twitter, it doesn't rely on external websites
 	#and everything is in-memory so it's not physically capable of spying on what you use it for. Other sites to come. Pixiv would be next but they don't have an api so...
 	if re.search(f"https?://twitter.com/[\S]+/status/[0-9]+(\?[\S]+)*", before.content) != None and re.search(f"https?://{EMBED_FIX_PREFIX}twitter.com/[\D]+/status/[0-9]+(\?[\S]+)*", after.content) != None:
-		parsed_text = re.search(f"(https?://twitter.com/[\S]+/status/[0-9]+)(\?[\S]+)*", before.content)
+		parsed_text = re.search(
+		    f"(https?://twitter.com/[\S]+/status/[0-9]+)(\?[\S]+)*", before.content)
 		parsed_text = parsed_text.group(1)
 		tweet_meta = TwitterService.get_tweet_meta_from_link(parsed_text)
 		embed_type = TwitterService.tweetType(tweet_meta['raw_data'])
@@ -146,7 +150,7 @@ async def on_message_edit(before, after):
 				is_gif = True
 			else:
 				media_urls.append(entry['url'])
-   
+
 		if not is_gif:
 			finalImage = TwitterService.genImageFromURL(media_urls)
 			imgIo = BytesIO()
@@ -154,14 +158,16 @@ async def on_message_edit(before, after):
 			finalImage.save(imgIo, 'JPEG', quality=70)
 			imgIo.seek(0)
 			tempFile = discord.File(fp=imgIo, filename="image.jpeg")
-	
+
 			#create the custom embed
 			#TODO: Replace avatar/image with the twitter poster's
 			bot_avatar = bot.user.avatar_url
 			bot_image = bot_avatar.BASE + bot_avatar._url
-	
+
 			#TODO: include more info if need be
-			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
+			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + \
+			    f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + \
+			        f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
 
 			embed_obj = discord.Embed(
 				colour=discord.Colour(0x5f4396),
@@ -171,15 +177,17 @@ async def on_message_edit(before, after):
 			)
 
 			embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
-	
+
 			embed_obj.set_image(url="attachment://image.jpeg")
 			await after.channel.send(file=tempFile, embed=embed_obj)
 		else:
 			bot_avatar = bot.user.avatar_url
 			bot_image = bot_avatar.BASE + bot_avatar._url
-	
+
 			#TODO: include more info if need be
-			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
+			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + \
+			    f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + \
+			        f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
 
 			embed_obj = discord.Embed(
 				colour=discord.Colour(0x5f4396),
@@ -188,15 +196,17 @@ async def on_message_edit(before, after):
 				url=parsed_text,
 			)
 			embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
-	
+
 			embed_obj.set_image(url=media_urls[0])
 			await after.channel.send(embed=embed_obj)
 			await after.channel.send(media_urls[0])
+
 
 @bot.event
 async def on_command_error(ctx, error):
 	print(error)
 	return
+
 
 @bot.command(aliases=['sauce', 'urls', 'sites'])
 async def source(ctx):
@@ -234,9 +244,10 @@ async def source(ctx):
 			# output = "Found that image at the following sites:\n "
 			# for url in url_list:
 			# 	output = output + "http://" + url + "\n"
-	
+
 			# await ctx.channel.send(output)
 			await ctx.channel.send(embed=embed_obj)
+
 
 @bot.command(aliases=['init', 'initServer'])
 async def initGuild(ctx):
@@ -596,7 +607,6 @@ async def ping_people(ctx, tag_list):
 		# else:
 		# 	if int(tmpUser.id) == ctx.message.author.id:
 		# 		continue
-  
 
 		cleaned_tags = list(tag_list)
 		for i in range(len(cleaned_tags)):
@@ -610,7 +620,7 @@ async def ping_people(ctx, tag_list):
 					if tag in tmpUser.tags and tmpUser not in loggedUsers:
 						data[guid]['users'][str(tmpUser.id)]['lastPing'] = pingTime
 						loggedUsers.append(tmpUser)
-					
+
 				for combo in tmpUser.tagCombos:
 					if all(combo_tag in cleaned_tags for combo_tag in combo):
 						if tmpUser not in loggedUsers:
@@ -751,7 +761,7 @@ async def randomPost(ctx, *tags):
 
 	cleaned_tags = []
 	for tag in tags:
-		cleaned_tags.append(tag.replace('`',''))
+		cleaned_tags.append(tag.replace('`', ''))
 
 	guid = str(ctx.guild.id)
 	cid = str(ctx.channel.id)
@@ -771,18 +781,21 @@ async def randomPost(ctx, *tags):
 		roll = False
 
 		randomDanSet = danSet(cleaned_tags)
-		randomGelSet = gelSet(cleaned_tags)['post']
-  
+		randomGelSet = gelSet(cleaned_tags)
+
+		if 'post' in randomGelSet:
+			randomGelSet = randomGelSet['post']
+
 		danWeight = len(randomDanSet)
 		gelWeight = len(randomGelSet)
 		totalWeight = danWeight + gelWeight
-		rolled_number = randint(0,totalWeight)
-  
-		if rolled_number <= danWeight:
+		rolled_number = randint(0, totalWeight-1)
+
+		if rolled_number < danWeight:
 			random_item = (randomDanSet[rolled_number], 'dan')
 		elif rolled_number - danWeight <= gelWeight:
 			random_item = (randomGelSet[rolled_number-danWeight], 'gel')
-   
+
 		if random_item[1] == 'dan':
 			tag_list = random_item[0]['tag_string'].split()
 			image_url = random_item[0]['file_url']
@@ -811,21 +824,30 @@ async def randomPost(ctx, *tags):
 	if JOKE_MODE and isExplicit:
 		poster = ctx.message.author.display_name
 		await ctx.channel.send(f"{poster} just rolled porn!", tts=True)
-  
+
 	#send the initial embed, reverse search for urls will take time
-	
+
 	bot_avatar = bot.user.avatar_url
 	bot_image = bot_avatar.BASE + bot_avatar._url
 
-	if random_item[1] == 'gel' :
+	if random_item[1] == 'gel':
 		post_id = random_item[0]['id']
-		description = random_item[0]['source'] + f'\nhttps://gelbooru.com/index.php?page=post&s=view&id={ post_id }'
+		description = random_item[0]['source'] + \
+		    f'\nhttps://gelbooru.com/index.php?page=post&s=view&id={ post_id }'
 		image_url = random_item[0]['file_url']
 	elif random_item[1] == 'dan':
 		post_id = random_item[0]['id']
-		description = random_item[0]['source'] + f'\nhttps://danbooru.donmai.us/posts/{post_id}'
+		description = random_item[0]['source'] + \
+		    f'\nhttps://danbooru.donmai.us/posts/{post_id}'
 		image_url = random_item[0]['file_url']
-   
+
+	await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")    
+	if image_url.endswith('.mp4'):
+		if isExplicit and not ctx.channel.is_nsfw():
+			embed_msg = await ctx.channel.send("||" + image_url + "||")
+		else:
+			embed_msg = await ctx.channel.send(image_url) 
+		return
    
 	embed_obj = discord.Embed(
   		colour=discord.Colour(0x5f4396),
@@ -835,7 +857,7 @@ async def randomPost(ctx, *tags):
 	embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
 	embed_obj.set_image(url=image_url)
  
-	await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
+	
 	if isExplicit and not ctx.channel.is_nsfw():
 		embed_msg = await ctx.channel.send("||" + image_url + "||")
 	else:
@@ -1470,7 +1492,7 @@ async def addBannedExplicitTagsCommand(ctx, guilds, guid, *tags):
 
 @bot.command(aliases=['canDelete', 'canRemove', 'canPurge'])
 async def addPurgablePoster(ctx: commands.context, id):
-	await invokePowerCommand(ctx, addPowerUserCommand, id)
+	await invokePowerCommand(ctx, addPurgablePosterCommand, id)
 
 
 async def addPurgablePosterCommand(ctx, guilds, guid, id):
