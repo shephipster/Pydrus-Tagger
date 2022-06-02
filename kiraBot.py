@@ -167,7 +167,7 @@ async def on_message_edit(before, after):
 			#TODO: include more info if need be
 			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + \
 			    f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + \
-			        f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
+                            f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
 
 			embed_obj = discord.Embed(
 				colour=discord.Colour(0x5f4396),
@@ -187,7 +187,7 @@ async def on_message_edit(before, after):
 			#TODO: include more info if need be
 			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + \
 			    f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + \
-			        f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
+                            f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
 
 			embed_obj = discord.Embed(
 				colour=discord.Colour(0x5f4396),
@@ -829,26 +829,34 @@ async def randomPost(ctx, *tags):
 
 	bot_avatar = bot.user.avatar_url
 	bot_image = bot_avatar.BASE + bot_avatar._url
+	sources = []
 
 	if random_item[1] == 'gel':
 		post_id = random_item[0]['id']
-		description = random_item[0]['source'] + \
-		    f'\nhttps://gelbooru.com/index.php?page=post&s=view&id={ post_id }'
+		sources.append(random_item[0]['source'])
+		sources.append(
+                    f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }')
 		image_url = random_item[0]['file_url']
 	elif random_item[1] == 'dan':
 		post_id = random_item[0]['id']
-		description = random_item[0]['source'] + \
-		    f'\nhttps://danbooru.donmai.us/posts/{post_id}'
+		sources.append(random_item[0]['source'])
+		sources.append(f'https://danbooru.donmai.us/posts/{post_id}')
 		image_url = random_item[0]['file_url']
+  
+	for source in sources:
+		if source.strip() == '':
+			sources.delete(source)
+   
+	description = '\n'.join(sources)
 
-	await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")    
+	#await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
 	if image_url.endswith('.mp4'):
 		if isExplicit and not ctx.channel.is_nsfw():
 			embed_msg = await ctx.channel.send("||" + image_url + "||")
 		else:
-			embed_msg = await ctx.channel.send(image_url) 
+			embed_msg = await ctx.channel.send(image_url)
 		return
-   
+
 	embed_obj = discord.Embed(
   		colour=discord.Colour(0x5f4396),
 		description=description,
@@ -856,31 +864,26 @@ async def randomPost(ctx, *tags):
 	)
 	embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
 	embed_obj.set_image(url=image_url)
- 
-	
+
 	if isExplicit and not ctx.channel.is_nsfw():
 		embed_msg = await ctx.channel.send("||" + image_url + "||")
 	else:
-		embed_msg = await ctx.channel.send(embed=embed_obj) 
- 
+		embed_msg = await ctx.channel.send(embed=embed_obj)
+
 	extra_data = IQDB.getInfoUrl(image_url)
-	sources = []
 	if extra_data != None:
 		for url in extra_data['urls']:
-			sources.append(url)
-  
-  
-	if random_item[0]['source'] not in sources:
-		sources.append(random_item[0]['source'])
-  
+			if url not in sources:
+				sources.append(url)
+
 	for i in range(len(sources)):
 		if re.match('https?://', sources[i]) == None:
 			sources[i] = "https://" + sources[i]
-  
+
 	description = '\n'.join(sources)
-  
-	#delete old embed and replace with new one that has more links
-	await embed_msg.delete()
+
+	#update embed
+
 	embed_obj = discord.Embed(
   		colour=discord.Colour(0x5f4396),
 		description=description,
@@ -889,10 +892,13 @@ async def randomPost(ctx, *tags):
 	embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
 	embed_obj.set_image(url=image_url)
 	if isExplicit and not ctx.channel.is_nsfw():
-			embed_msg = await ctx.channel.send("||" + image_url + "||")
+		embed_msg = await ctx.channel.send("||" + image_url + "||")
 	else:
-			embed_msg = await ctx.channel.send(embed=embed_obj) 
-	
+		embed_msg = await embed_msg.edit(embed=embed_obj)
+  
+	if DEBUG:
+		print(tag_list)
+
 	await ping_people(ctx, tag_list)
 
 	return
@@ -1578,7 +1584,7 @@ async def updateGuildCommand(guild):
 
 	guid = f'{guild.id}'
 	#for role in guild.roles:
-		#print(role)
+	#print(role)
 
 	tempGuild = Guild.Guild(guild)
 	if guid in data.keys():
@@ -1669,12 +1675,12 @@ async def unbanNSFWTagsFromChannelCommand(ctx, guilds, guid, *tags):
 #     #in a single embed best I can figure
 # 	bot_avatar = bot.user.avatar_url
 # 	bot_image = bot_avatar.BASE + bot_avatar._url
- 
+
 # 	payload = {
 # 		"username": "Kira Bot",
 # 		"avatar_url": bot_image,
 # 	}
- 
+
 # 	bot_avatar = bot.user.avatar_url
 # 	bot_image = bot_avatar.BASE + bot_avatar._url
 
@@ -1730,36 +1736,38 @@ async def giveaway(ctx, winners, time, *allowed_roles):
                 if gr.id == role_id:
                     available_roles.append(gr)
                     available_roles_mentions.append(gr.mention)
-	
+
     roles_string = ','.join(available_roles_mentions)
-    
+
     description = f'{ctx.author.name} is running a lottery!\n{winners} lucky winners will be selected from those that ' \
-        + f'click the 🎁 reaction below so long as you are {roles_string}.\nBetter hurry up though, it will only last for so long!'
+        + \
+        f'click the 🎁 reaction below so long as you are {roles_string}.\nBetter hurry up though, it will only last for so long!'
     bot_avatar = bot.user.avatar_url
     bot_image = bot_avatar.BASE + bot_avatar._url
     embed_obj = discord.Embed(
-		colour=discord.Colour(0x5f4396),
-		description=description,
-		type="rich",
-	)
+        colour=discord.Colour(0x5f4396),
+        description=description,
+        type="rich",
+    )
     embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
     msg = await ctx.channel.send(embed=embed_obj)
     await msg.add_reaction(str('🎁'))
-    
+
     await asyncio.sleep(int(delay))
-    msg = await ctx.channel.fetch_message(msg.id)	#update message with those that reacted
+    # update message with those that reacted
+    msg = await ctx.channel.fetch_message(msg.id)
     reactors = await msg.reactions[0].users().flatten()
     #available
     can_be_selected = []
     for person in reactors:
         if person.bot == False and any(role in available_roles for role in person.roles):
             can_be_selected.append(person)
-            
+
     #get W random winners, do NOT allow repeats
     if can_be_selected == []:
         await ctx.channel.send("There were no winners this time around. If you entered, make sure you have one of the roles for the lottery.")
         return
-    
+
     picked = list()
     for x in range(len(can_be_selected)):
         if can_be_selected == []:
@@ -1768,14 +1776,21 @@ async def giveaway(ctx, winners, time, *allowed_roles):
         item = choice(can_be_selected)
         picked.append(item)
         can_be_selected.remove(item)
-    
-    await msg.delete()
-    
+
     message = f'Selection is over! Will the following people please message {ctx.message.author.mention} for the follow-up.'
+    embed_obj = discord.Embed(
+        colour=discord.Colour(0x5f4396),
+        description="Entry period is over!",
+        type="rich",
+    )
+    embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+
+    await msg.edit(embed=embed_obj)
+
     winner_mentions = []
     for winner in picked:
         winner_mentions.append(winner.mention)
-    
+
     winners_string = ",".join(winner_mentions)
     message += "\n" + winners_string
     await ctx.channel.send(message)
