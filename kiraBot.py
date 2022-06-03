@@ -8,6 +8,7 @@ import imagehash
 import os
 import re
 import shutil
+import html
 
 from random import choice, choices, randint
 from dotenv import load_dotenv
@@ -25,7 +26,7 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-DEBUG = True
+DEBUG = False # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -165,10 +166,12 @@ async def on_message_edit(before, after):
 			bot_image = bot_avatar.BASE + bot_avatar._url
 
 			#TODO: include more info if need be
-			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + \
+			body = f"Original: {parsed_text}\n" + tweet_meta['raw_data']['data']['text'] + \
 			    f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + \
                             f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
 
+			body = html.unescape(body)
+      
 			embed_obj = discord.Embed(
 				colour=discord.Colour(0x5f4396),
 				description=body,
@@ -845,7 +848,7 @@ async def randomPost(ctx, *tags):
   
 	for source in sources:
 		if source.strip() == '':
-			sources.delete(source)
+			sources.remove(source)
    
 	description = '\n'.join(sources)
 
