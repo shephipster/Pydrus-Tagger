@@ -26,7 +26,7 @@ from scipy.spatial import distance
 import Services.IQDBService as IQDB
 
 load_dotenv()
-DEBUG = False # set to false for live versions
+DEBUG = True # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -93,7 +93,7 @@ def initFiles():
 @bot.event
 async def on_message(message):
 	channel = message.channel
-	if message.author == bot.user:
+	if message.author.bot == True:
 		#This causes bot to by-pass the repost filter. Do we care? I don't, and who would notice
 		return
 
@@ -1454,7 +1454,6 @@ async def addPowerRole(ctx: commands.context, role):
 
 
 async def addPowerRoleCommand(ctx, guilds, guid, role):
-	#print(role)
 	if role not in guilds[guid]['powerRoles']:
 		guilds[guid]['powerRoles'].append(role)
 		with open(guildsFile, 'w') as dataFile:
@@ -1592,8 +1591,6 @@ async def updateGuildCommand(guild):
 	f.close()
 
 	guid = f'{guild.id}'
-	#for role in guild.roles:
-	#print(role)
 
 	tempGuild = Guild.Guild(guild)
 	if guid in data.keys():
@@ -1728,7 +1725,6 @@ async def giveaway(ctx, winners, time, *allowed_roles):
             delay = int(re.search('(\d+)', time).group(1))
         elif re.search('(\d+)h', time) != None:
             delay = int(re.search('(\d+)', time).group(1)) * 3600
-    print(delay)
     #get what roles can enter
     available_roles = []
     available_roles_mentions = []
