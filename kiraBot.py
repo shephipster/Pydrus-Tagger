@@ -580,12 +580,13 @@ def sauceNaoLookup(url):
 # 	return tag_list
 
 
-async def ping_people(ctx, tag_list):
+async def ping_people(ctx, tag_list, exempt_user):
 	"""	Takes a tag_list from an image and pings the people that it concerns.
 		Pings use userID so it can't call by nickname
 	"""
 	pingTime = time.time()
 	isPM = not ctx.guild
+	exempt_user = User.User(exempt_user) if exempt_user else None
 
 	loggedUsers = []
 
@@ -635,9 +636,11 @@ async def ping_people(ctx, tag_list):
 
 	message = ""
 	loopUser: User
-
+	
 	#Not going to be nearly as efficient, but at this point I don't care. Re-loop through everything to generate the message
 	for loopUser in loggedUsers:
+		if exempt_user != None and loopUser.id == exempt_user.id.id:
+			continue
 		if loopUser.notify:
 			message += f"<@{loopUser.id}>"
 			if loopUser.specifyTags:
@@ -650,6 +653,8 @@ async def ping_people(ctx, tag_list):
 						message += f"`{combo}`, "
 				message = message[:-2]
 		else:
+			if exempt_user != None and loopUser.id == exempt_user.id.id:
+					continue
 			message += f"{loopUser.name}"
 			if loopUser.specifyTags:
 				message += " for "
@@ -902,7 +907,8 @@ async def randomPost(ctx, *tags):
 	if DEBUG:
 		print(tag_list)
 
-	await ping_people(ctx, tag_list)
+
+	await ping_people(ctx, tag_list, exempt_user = ctx.message.author)
 
 	return
 
