@@ -1,7 +1,5 @@
-from ast import alias
 from random import randint
 import re
-from click import pass_context
 import discord
 from discord.ext import commands
 from Cogs.PingPeople import ping_people
