@@ -13,3 +13,4 @@ tester.py
 .env
 guilds.json
 .vscode/launch.json
+Cogs/__pycache__/*
