@@ -3,25 +3,17 @@ import os
 
 from Entities import User
 
-async def processUser(ctx, guid=-1):
-	#If this is in DM's, there is no guild with an id
-	if not ctx.guild:
-		if guid == -1:
-			await ctx.channel.send("I'm having trouble knowing what guild you want.\nEither try that again in the guild you want to update stuff for or give me the guild ID")
-			return None, None
-	else:
-		guid = str(ctx.guild.id)
-
-	uid = str(ctx.author.id)
-
+async def processUser(ctx, guid:int, uid: int):
 	f = open(os.getenv('GUILDS_FILE'))
 	guilds = json.load(f)
 	f.close()
 
-	user = User.User(ctx.author.id)
+	user = User.User(uid)
+	user_id = f'{uid}'
+	guild_id = f'{guid}'
 
-	if uid not in guilds[guid]['users']:
-		guilds[guid]['users'][uid] = user.__dict__
+	if user_id not in guilds[guild_id]['users']:
+		guilds[guild_id]['users'][user_id] = user.__dict__
 
-	user.setFromDict(uid, guilds[guid]['users'][uid])
+	user.setFromDict(user_id, guilds[guild_id]['users'][user_id])
 	return user, guilds

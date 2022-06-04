@@ -123,11 +123,12 @@ def getInfoDiscordFile(fp:io.BufferedIOBase):
             for tag in danTags:
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
-            md5 = re.findall('md5=[\d|\w]+', url)[0]
-            md5 = md5[4:]
-            gelTags = GelbooruService.getTagsFromMD5(md5)
-            for tag in gelTags:
-                tags.add(tag)
+            md5 = re.findall('md5=[\d|\w]+', url)
+            if md5 != None:
+                md5 = md5[4:]
+                gelTags = GelbooruService.getTagsFromMD5(md5)
+                for tag in gelTags:
+                    tags.add(tag)
         elif url.find('e621') != -1:
             print(url)
             

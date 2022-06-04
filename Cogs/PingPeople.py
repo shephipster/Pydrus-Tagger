@@ -20,7 +20,7 @@ async def ping_people(ctx, tag_list, exempt_user):
 	if isPM:
 		return
 
-	user, data = await processUser(ctx)
+	user, data = await processUser(ctx, guid = ctx.guild.id, uid= ctx.author.id)
 	if user == None or data == None:
 		#there was an issue, break
 		return

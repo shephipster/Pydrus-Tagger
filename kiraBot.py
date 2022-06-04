@@ -5,7 +5,6 @@ import os
 import re
 import time
 from io import BytesIO
-from random import choice
 
 import discord
 import imagehash
@@ -16,8 +15,6 @@ from PIL import Image
 from scipy.spatial import distance
 
 import Services.IQDBService as IQDB
-import Utilities.TagAPI as TagAPI
-from Cogs import PingPeople
 from Cogs.Activities import Activities
 from Cogs.Luck import Luck
 from Cogs.Management import Management
@@ -28,7 +25,6 @@ from Cogs.TagManager import TagManager
 from Cogs.UserManagement import UserManagement
 from Entities import Post
 from Services import TwitterService
-from Utilities.ProcessUser import processUser
 
 load_dotenv()
 DEBUG = True  # set to false for live versions
@@ -78,7 +74,6 @@ bot.add_cog(UserManagement(bot))
 manager = bot.get_cog('Management')
 
 
-
 @bot.event
 async def on_guild_join(guild):
 	print("Joined guild", guild)
@@ -125,7 +120,7 @@ async def on_message(message):
 				data = IQDB.getInfoDiscordFile(file)
 				if data != None and not 'error' in data:
 					tag_list = data['tags']
-					await ping_people(message, tag_list)
+					await ping_people(message, tag_list, exempt_user=message.author)
 
 					if repostDetected(message.channel.guild, attachment.url):
 						await message.add_reaction(str('♻️'))
@@ -156,15 +151,31 @@ async def on_message_edit(before, after):
 		media = []
 		media_urls = []
 		is_gif = False
+		is_video = False
+		max_bitrate = 0
+		max_bitrate_index = -1
 		for entry in tweet_meta['raw_data']['includes']['media']:
 			media.append(entry)
 			if entry['type'] == 'animated_gif':
-				media_urls.append(entry['variants'][0]['url'])
 				is_gif = True
+				for ind, url in enumerate(entry['variants']):
+					media_urls.append(url['url'])
+					if 'bit_rate' in url:
+						if max_bitrate > url['bit_rate']:
+							max_bitrate = url['bit_rate']
+							max_bitrate_index = ind
+			elif entry['type'] == 'video':
+				for ind, url in enumerate(entry['variants']):
+					media_urls.append(url['url'])
+					if 'bit_rate' in url:
+						if max_bitrate > url['bit_rate']:
+							max_bitrate = url['bit_rate']
+							max_bitrate_index = ind
+				is_video = True
 			else:
 				media_urls.append(entry['url'])
 
-		if not is_gif:
+		if not is_gif and not is_video:
 			finalImage = TwitterService.genImageFromURL(media_urls)
 			imgIo = BytesIO()
 			finalImage = finalImage.convert("RGB")
@@ -178,7 +189,7 @@ async def on_message_edit(before, after):
 			bot_image = bot_avatar.BASE + bot_avatar._url
 
 			#TODO: include more info if need be
-			body = f"Original: {parsed_text}\n" + tweet_meta['raw_data']['data']['text'] + \
+			body = f"Original: {parsed_text} \n" + tweet_meta['raw_data']['data']['text'] + \
 			    f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + \
                             f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
 
@@ -195,12 +206,14 @@ async def on_message_edit(before, after):
 
 			embed_obj.set_image(url="attachment://image.jpeg")
 			await after.channel.send(file=tempFile, embed=embed_obj)
-		else:
+		elif is_gif:
+			#Apparently Twitter hides gif urls, but not jpgs/pngs or videos
+			#Gifs do include mp4 variants, so we'll use that
 			bot_avatar = bot.user.avatar_url
 			bot_image = bot_avatar.BASE + bot_avatar._url
 
 			#TODO: include more info if need be
-			body = f"Original: {parsed_text}" + tweet_meta['raw_data']['data']['text'] + \
+			body = f"Original: {parsed_text} \n" + tweet_meta['raw_data']['data']['text'] + \
 			    f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + \
                             f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
 
@@ -212,9 +225,30 @@ async def on_message_edit(before, after):
 			)
 			embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
 
-			embed_obj.set_image(url=media_urls[0])
+			embed_obj.set_image(url=media_urls[max_bitrate_index])
 			await after.channel.send(embed=embed_obj)
-			await after.channel.send(media_urls[0])
+			await after.channel.send(media_urls[max_bitrate_index])
+		elif is_video:
+
+			bot_avatar = bot.user.avatar_url
+			bot_image = bot_avatar.BASE + bot_avatar._url
+
+			#TODO: include more info if need be
+			body = f"Original: {parsed_text} \n" + tweet_meta['raw_data']['data']['text'] + \
+			    f"\n❤{tweet_meta['raw_data']['data']['public_metrics']['like_count']}" + \
+                            f"\t🔁{tweet_meta['raw_data']['data']['public_metrics']['retweet_count']}"
+
+			embed_obj = discord.Embed(
+				colour=discord.Colour(0x5f4396),
+				description=body,
+				type="rich",
+				url=parsed_text,
+			)
+			embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+
+			embed_obj.set_image(url=media_urls[max_bitrate_index])
+			await after.channel.send(embed=embed_obj)
+			await after.channel.send(media_urls[max_bitrate_index])
 
 
 @bot.event
@@ -323,5 +357,6 @@ def postExpired(timePosted: float):
 	if postTTL == -1:
 		return False
 	return time.time() - timePosted >= postTTL
+
 
 bot.run(TOKEN)

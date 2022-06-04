@@ -1,5 +1,7 @@
+from ast import alias
 from random import randint
 import re
+from click import pass_context
 import discord
 from discord.ext import commands
 from Cogs.PingPeople import ping_people
@@ -21,9 +23,8 @@ class RandomPost(commands.Cog):
     '''
     def __init__(self, bot):
         self.bot = bot
-        self._last_member = None
 
-    @commands.command()
+    @commands.command(aliases=['randomimage'])
     async def randomPost(self, ctx, *tags):
         """Fetches a random post from multiple sites that contains the provided tag(s) and then displays it in a custom embed.
 
@@ -33,7 +34,7 @@ class RandomPost(commands.Cog):
         roll = True
         num_rolls = 0
 
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -145,7 +146,7 @@ class RandomPost(commands.Cog):
         embed_obj.set_image(url=image_url)
 
         if isExplicit and not ctx.channel.is_nsfw():
-            embed_msg = await ctx.channel.send("||" + image_url + "||")
+            embed_msg = await ctx.channel.send("|| " + image_url + " ||")
         else:
             embed_msg = await ctx.channel.send(embed=embed_obj)
 
@@ -171,7 +172,7 @@ class RandomPost(commands.Cog):
         embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
         embed_obj.set_image(url=image_url)
         if isExplicit and not ctx.channel.is_nsfw():
-            embed_msg = await ctx.channel.send("||" + image_url + "||")
+            embed_msg = await ctx.channel.send("|| " + image_url + " ||")
         else:
             embed_msg = await embed_msg.edit(embed=embed_obj)
     
@@ -179,10 +180,12 @@ class RandomPost(commands.Cog):
 
         return
     
-    @commands.command()
+    @commands.command(pass_context=True, aliases=['randomporn', 'randomexplicit'])
     async def randomNsfw(self, ctx, *tags):
-       await self.randomPost(self, ctx, 'rating:explicit', *tags) 
+       await ctx.invoke(self.bot.get_command('randomPost'), 'rating:explicit', *tags)
+
     
-    @commands.command()
+    @commands.command(pass_context=True, aliases=['randomsafe'])
     async def randomSfw(self, ctx, *tags):
-        await self.randomPost(self, ctx, 'rating:general', *tags)
+        await ctx.invoke(self.bot.get_command('randomPost'), 'rating:general', *tags)
+
