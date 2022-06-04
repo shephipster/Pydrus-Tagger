@@ -26,7 +26,7 @@ from Cogs.RandomPost import RandomPost
 from Cogs.Source import Source
 from Cogs.TagManager import TagManager
 from Cogs.UserManagement import UserManagement
-from Entities import Guild, Post
+from Entities import Post
 from Services import TwitterService
 from Utilities.ProcessUser import processUser
 
@@ -75,6 +75,8 @@ bot.add_cog(RandomPost(bot))
 bot.add_cog(Source(bot))
 bot.add_cog(TagManager(bot))
 bot.add_cog(UserManagement(bot))
+manager = bot.get_cog('Management')
+
 
 
 @bot.event
@@ -86,6 +88,7 @@ async def on_guild_join(guild):
 @bot.event
 async def on_ready():
 	initFiles()
+	await manager.updateAllGuilds()
 	print('Running')
 
 

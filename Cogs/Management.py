@@ -11,7 +11,6 @@ class Management(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.guildsFile = os.getenv('GUILDS_FILE')
-        self.updateAllGuilds()
 
     @commands.command(aliases=['deleteMessage', 'deletepost', 'removepost', 'delete'])
     async def removeMessage(self, ctx, id):
@@ -219,7 +218,7 @@ class Management(commands.Cog):
 
         guid = f'{guild.id}'
 
-        tempGuild = Guild.Guild(guild)
+        tempGuild = Guild(guild)
         if guid in data.keys():
             tempGuild.setFromDict(data[guid])
         data[guid] = tempGuild
