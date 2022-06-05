@@ -1,3 +1,4 @@
+import aiohttp
 import requests
 import random
 #import os
@@ -34,17 +35,18 @@ def getTagsFromId(id):
 
     return tags
 
-def getTagsFromMD5(md5):
+async def getTagsFromMD5(md5):
     finalString = GELBOORU_MD5_URL.format(md5, '')
-    resp = requests.get(finalString)
-    respJson = resp.json()
-    tagStr = ""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(finalString, ssl=False) as r:
+            respJson = await r.json()
 
+    tagStr = ""
     if 'post' in respJson:
-        items = respJson['post'][0].items()
+        items = respJson['post']
         for i in items:
             if('tags' in i):
-                tagStr = i[1]
+                tagStr = i['tags']
 
     tags = set()
 
@@ -63,22 +65,19 @@ def checkMD5(md5):
     if 'post' in respJson:
         return md5
 
-def getRandomSetWithTags(*tags):
+async def getRandomSetWithTags(*tags):
     tagList = ""
     for tag in tags[0]:
         tagList += tag + " "
     tagList = tagList[:-1]
-    resp = requests.get("http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&limit=9999&tags=" + tagList)
-    respJson = resp.json()
-    return respJson
+    url = "http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&limit=9999&tags=" + tagList + "&random"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, ssl=False) as r:
+            return await r.json()
 
-def getRandomPostWithTags(*tags):
-    tagList = ""
-    for tag in tags[0]:
-        tagList += tag + " "
-    tagList = tagList[:-1]
-    resp = requests.get("http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&limit=9999&tags=" + tagList)
-    respJson = resp.json()
+
+async def getRandomPostWithTags(*tags):
+    respJson = await getRandomSetWithTags(*tags)
     if 'post' in respJson.keys():
         randPost = random.randint(0, len(respJson['post']) - 1)
         post = respJson['post'][randPost]

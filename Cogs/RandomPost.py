@@ -58,8 +58,8 @@ class RandomPost(commands.Cog):
         while roll:
             roll = False
 
-            randomDanSet = danSet(cleaned_tags)
-            randomGelSet = gelSet(cleaned_tags)
+            randomDanSet = await danSet(cleaned_tags)
+            randomGelSet = await gelSet(cleaned_tags)
 
             if 'post' in randomGelSet:
                 randomGelSet = randomGelSet['post']

@@ -14,11 +14,11 @@ MAX_DIM = (7500,7500)
 LIKENESS_LIMIT = 80 #result must be at least this % similar to be counted
 
 async def getFromDiscordFile(fp):
-    body = {
+    files = {
         'file': fp
     }
     async with aiohttp.ClientSession() as session:
-        async with session.post(URL, data=body, ssl=False) as r:
+        async with session.post(URL, data=files, ssl=False) as r:
             return await r.text()
 
 def getFromFile(file):  
@@ -34,7 +34,7 @@ async def getFromUrl(url):
         'url': url
     }
     async with aiohttp.ClientSession() as session:
-        async with session.get(URL, json=payload, ssl=False) as r:
+        async with session.get(URL, params=payload, ssl=False) as r:
             return await r.text()
 
 def refineText(r):
@@ -125,16 +125,16 @@ async def getInfoDiscordFile(fp:io.BufferedIOBase):
         if url.find('danbooru') != -1:
             #get the id from the url and then pass it to DanbooruService
             id = re.findall('\d+', url)[0]
-            danTags = DanbooruService.getTagsFromId(id)
+            danTags = await DanbooruService.getTagsFromId(id)
             for tag in danTags:
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
             md5 = re.findall('md5=[\d|\w]+', url)
             if md5 != None:
-                md5 = md5[4:]
-                gelTags = GelbooruService.getTagsFromMD5(md5)
-                for tag in gelTags:
-                    tags.add(tag)
+                for m in md5:
+                    gelTags = await GelbooruService.getTagsFromMD5(m[4:])
+                    for tag in gelTags:
+                        tags.add(tag)
         elif url.find('e621') != -1:
             print(url)
             
@@ -205,7 +205,7 @@ async def getInfoUrl(url):
         if url.find('danbooru') != -1:
             #get the id from the url and then pass it to DanbooruService
             id = re.findall('\d+', url)[0]
-            danTags = DanbooruService.getTagsFromId(id)
+            danTags = await DanbooruService.getTagsFromId(id)
             for tag in danTags:
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
@@ -222,10 +222,16 @@ async def getInfoUrl(url):
         'urls': urls
     }
     
-def getSauceNaoLink(res:requests.Response):
-    text = res.text
+def getSauceNaoLink(res):
+    if isinstance(res, requests.Response):
+        text = res.text
+    elif isinstance(res, str):
+        text = res
     regex = "saucenao.com/search.php\?db=999&dbmaski=32768&url=(https://iqdb.org/thu/[\w\d]+.\w{3})"
-    url = re.findall(regex, text)[0]
+    try:
+        url = re.findall(regex, text)[0]
+    except IndexError:
+        pass
     url = "https://saucenao.com/search.php?db=999&dbmaski=32768&url=" + url
     return url
 
