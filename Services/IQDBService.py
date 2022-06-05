@@ -210,7 +210,7 @@ async def getInfoUrl(url):
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
             md5 = re.search('md5=([\d|\w]+)', url)
-            gelTags = GelbooruService.getTagsFromMD5(md5.group(1)) if md5 != None else []
+            gelTags = await GelbooruService.getTagsFromMD5(md5.group(1)) if md5 != None else []
             for tag in gelTags:
                 tags.add(tag)
         elif url.find('e621') != -1:
