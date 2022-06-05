@@ -17,7 +17,7 @@ class Source(commands.Cog):
                 file = await attachment.to_file()
                 file_url = attachment.url
                 file = file.fp
-                data = IQDBService.getInfoDiscordFile(file)
+                data = await IQDBService.getInfoDiscordFile(file)
                 if 'error' in data.keys():
                     await ctx.channel.send(f"Sorry, I had trouble finding that. You can try checking SauceNao here: {data['sauceNao_redirect']}")
                     return
@@ -46,7 +46,7 @@ class Source(commands.Cog):
                 # 	output = output + "http://" + url + "\n"
 
                 # await ctx.channel.send(output)
-                await ctx.channel.send(embed=embed_obj)
+                await ctx.reply(embed=embed_obj)
                 
     @commands.command(aliases=['tags'])
     async def getTagsFor(self, ctx):

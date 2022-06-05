@@ -9,7 +9,6 @@ from Services.DanbooruService import getRandomSetWithTags as danSet
 
 from Utilities.ProcessUser import processUser
 
-
 # https://discordpy.readthedocs.io/en/stable/ext/commands/cogs.html#ext-commands-cogs
 
 ROLL_LIMIT = 10
@@ -24,6 +23,7 @@ class RandomPost(commands.Cog):
 
     @commands.command(aliases=['randomimage','rollimage'])
     async def randomPost(self, ctx, *tags):
+        
         """Fetches a random post from multiple sites that contains the provided tag(s) and then displays it in a custom embed.
 
         Args:
@@ -86,7 +86,7 @@ class RandomPost(commands.Cog):
                 tag_list = random_item[0]['tags'].split()
                 image_url = random_item[0]['file_url']
                 isExplicit = random_item[0]['rating'] == 'explicit'
-
+                
             #Safety filter, if it's loli and explicit re-roll that junk
             for tag in tag_list:
                 if tag in bannedTags:
@@ -97,6 +97,11 @@ class RandomPost(commands.Cog):
                     roll = True
                     #print('skipped a post because of', tag)
                     break
+                
+            if isExplicit and not ctx.channel.is_nsfw():
+                #nsfw rolled in sfw channel, try again
+                roll = True
+                continue
 
             num_rolls += 1
             if num_rolls > ROLL_LIMIT:
@@ -133,12 +138,7 @@ class RandomPost(commands.Cog):
 
         #await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
         if image_url.endswith('.mp4'):
-            if isExplicit and not ctx.channel.is_nsfw():
-                #embed_msg = await ctx.channel.send("||" + image_url + "||")
-                await ctx.channel.send("Sorry, I can't roll porn in a channel not marked as explicit.")
-                return
-            else:
-                embed_msg = await ctx.channel.send(image_url)
+            embed_msg = await ctx.channel.send(image_url)
             return
 
         embed_obj = discord.Embed(
@@ -149,12 +149,16 @@ class RandomPost(commands.Cog):
         embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
         embed_obj.set_image(url=image_url)
 
-        if isExplicit and not ctx.channel.is_nsfw():
-            embed_msg = await ctx.channel.send("|| " + image_url + " ||")
-        else:
-            embed_msg = await ctx.channel.send(embed=embed_obj)
+        embed_msg = await ctx.channel.send(embed=embed_obj)
 
-        extra_data = IQDBService.getInfoUrl(image_url)
+        await self.updateRolledImage(sources=sources, ctx=ctx, embed_msg=embed_msg, image_url=image_url, tag_list=tag_list, isExplicit=isExplicit)
+        return
+    
+    #Blocking calls
+    async def updateRolledImage(self, ctx, sources, embed_msg, image_url, tag_list, isExplicit):
+        extra_data = await IQDBService.getInfoUrl(image_url)
+        bot_avatar = self.bot.user.avatar_url
+        bot_image = bot_avatar.BASE + bot_avatar._url
         if extra_data != None:
             for url in extra_data['urls']:
                 if url not in sources:
@@ -187,6 +191,9 @@ class RandomPost(commands.Cog):
     
     @commands.command(pass_context=True, aliases=['randomporn', 'randomexplicit', 'rollporn'])
     async def randomNsfw(self, ctx, *tags):
+       if not ctx.channel.is_nsfw():
+           await ctx.channel.send("Sorry, I can't roll NSFW in a channel that's not age-restricted. Try randomPost or randomSafe instead.")
+           return
        await ctx.invoke(self.bot.get_command('randomPost'), 'rating:explicit', *tags)
 
     

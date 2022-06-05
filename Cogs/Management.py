@@ -202,7 +202,8 @@ class Management(commands.Cog):
         data = json.load(f)
         f.close()
 
-        await self.updateGuildCommand(ctx.guild.id, data)
+        data = ctx.guild
+        await self.updateGuildCommand(data)
 
 
     async def updateAllGuilds(self):
@@ -211,13 +212,11 @@ class Management(commands.Cog):
 
 
     async def updateGuildCommand(self, guild):
-
         f = open(self.guildsFile)
         data = json.load(f)
         f.close()
 
         guid = f'{guild.id}'
-
         tempGuild = Guild(guild)
         if guid in data.keys():
             tempGuild.setFromDict(data[guid])
@@ -225,6 +224,7 @@ class Management(commands.Cog):
 
         with open(self.guildsFile, "w") as dataFile:
             json.dump(data, dataFile, indent=4)
+            
             
     @commands.command(aliases=['banChannelTag'])
     async def banTagFromChannel(self, ctx, *tags):

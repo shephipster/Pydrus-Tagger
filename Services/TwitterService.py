@@ -6,7 +6,6 @@ import re
 from PIL import Image, ImageOps, ImageFilter
 from requests import get
 from io import BytesIO
-import base64
 import concurrent.futures
 from time import time as timer
 

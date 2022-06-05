@@ -1,3 +1,4 @@
+import aiohttp
 import requests
 import re
 import os
@@ -12,12 +13,13 @@ FILE_LIMIT = 8192000 #limit is 8192KB
 MAX_DIM = (7500,7500)
 LIKENESS_LIMIT = 80 #result must be at least this % similar to be counted
 
-def getFromDiscordFile(fp):
+async def getFromDiscordFile(fp):
     body = {
         'file': fp
     }
-    r = requests.post(URL, files=body)
-    return r
+    async with aiohttp.ClientSession() as session:
+        async with session.post(URL, data=body, ssl=False) as r:
+            return await r.text()
 
 def getFromFile(file):  
     body = { 
@@ -26,16 +28,20 @@ def getFromFile(file):
     r = requests.post(URL, files=body)
     return r
 
-def getFromUrl(url):
+async def getFromUrl(url):
     #takes a url and returns the html result from IQDB
     payload = {
         'url': url
     }
-    r = requests.get(URL, params=payload)
-    return r
+    async with aiohttp.ClientSession() as session:
+        async with session.get(URL, json=payload, ssl=False) as r:
+            return await r.text()
 
-def refineText(r: requests.Response):
-    text = r.text
+def refineText(r):
+    if isinstance(r, requests.Response):
+        text = r.text
+    elif isinstance(r, str):
+        text = r
     start = text.find('<th>Best match</th>')
 
     if start == -1:
@@ -99,9 +105,9 @@ def parseEntry(entry:str):
     }
     return entry
 
-def getInfoDiscordFile(fp:io.BufferedIOBase):
+async def getInfoDiscordFile(fp:io.BufferedIOBase):
     #urls
-    r = getFromDiscordFile(fp)
+    r = await getFromDiscordFile(fp)
     rt = refineText(r)    
     if rt == None:
         redirection = getSauceNaoLink(r)
@@ -172,14 +178,23 @@ def getInfoFile(file):
         'urls': urls
     }
 
-def getInfoUrl(url):
-    r = getFromUrl(url)
+async def getInfoUrl(url):
+    r = await getFromUrl(url)
     rt = refineText(r)
     if rt == None:
-        r = requests.get(f'{url}', stream=True)
-        file = r.raw.read()      
-        md5 = hashlib.md5(file)
-        return GelbooruService.checkMD5(md5)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f'{url}', ssl=False) as r:
+                file = r.content.read_nowait()      
+                md5 = hashlib.md5(file)
+                return GelbooruService.checkMD5(md5)
+    
+    # r = getFromUrl(url)
+    # rt = refineText(r)
+    # if rt == None:
+    #     r = requests.get(f'{url}', stream=True)
+    #     file = r.raw.read()      
+    #     md5 = hashlib.md5(file)
+    #     return GelbooruService.checkMD5(md5)
 
     urls = getUrls(rt)
     tags = getTags(rt)
