@@ -134,7 +134,9 @@ class RandomPost(commands.Cog):
         #await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
         if image_url.endswith('.mp4'):
             if isExplicit and not ctx.channel.is_nsfw():
-                embed_msg = await ctx.channel.send("||" + image_url + "||")
+                #embed_msg = await ctx.channel.send("||" + image_url + "||")
+                await ctx.channel.send("Sorry, I can't roll porn in a channel not marked as explicit.")
+                return
             else:
                 embed_msg = await ctx.channel.send(image_url)
             return

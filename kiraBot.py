@@ -27,7 +27,7 @@ from Entities import Post
 from Services import TwitterService
 
 load_dotenv()
-DEBUG = True  # set to false for live versions
+DEBUG = False  # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
