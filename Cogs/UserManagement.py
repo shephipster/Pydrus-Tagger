@@ -123,7 +123,7 @@ class UserManagement(commands.Cog):
             await ctx.channel.send("How am I supposed to wait for negative seconds? Just say 0 if you want no delay and use +toggleNotify if you don't want to be pinged.")
             return
 
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -142,7 +142,7 @@ class UserManagement(commands.Cog):
     @commands.command()
     async def checkNotifications(self, ctx):
         """ Tells you if you'll be pinged for images or only get a small mention """
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -161,7 +161,7 @@ class UserManagement(commands.Cog):
     @commands.command(aliases=['nick'])
     async def nickname(self, ctx, name):
 
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -187,7 +187,7 @@ class UserManagement(commands.Cog):
             await ctx.channel.send("Not sure what that means. Use +help setNotify for the list you can use.")
             return
 
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return

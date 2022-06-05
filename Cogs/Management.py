@@ -16,7 +16,7 @@ class Management(commands.Cog):
     async def removeMessage(self, ctx, id):
         message = await ctx.channel.fetch_message(id)
 
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -41,7 +41,7 @@ class Management(commands.Cog):
     async def invokePowerCommand(self, ctx: commands.context, command, *params):
         user: User
         guild: Guild
-        user, guilds = await processUser(ctx)
+        user, guilds = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         guild = guilds[f'{ctx.guild.id}']
 
         if user == None or guild == None:
@@ -310,7 +310,7 @@ class Management(commands.Cog):
         data = json.load(f)
         f.close()
 
-        guild = Guild.Guild(ctx.guild)
+        guild = Guild(ctx.guild)
 
         if guildUID not in data.keys():
             #guild not initialized yet, add it

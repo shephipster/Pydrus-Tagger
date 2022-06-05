@@ -77,7 +77,7 @@ manager = bot.get_cog('Management')
 @bot.event
 async def on_guild_join(guild):
 	print("Joined guild", guild)
-	await updateGuildCommand(guild)
+	await manager.updateGuildCommand(guild)
 
 
 @bot.event

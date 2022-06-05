@@ -22,7 +22,7 @@ class RandomPost(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=['randomimage'])
+    @commands.command(aliases=['randomimage','rollimage'])
     async def randomPost(self, ctx, *tags):
         """Fetches a random post from multiple sites that contains the provided tag(s) and then displays it in a custom embed.
 
@@ -68,6 +68,10 @@ class RandomPost(commands.Cog):
             gelWeight = len(randomGelSet)
             totalWeight = danWeight + gelWeight
             rolled_number = randint(0, totalWeight-1)
+            
+            if danWeight == 0 and gelWeight == 1:
+                await ctx.channel.send("Couldn't find any posts with the given tag(s), sorry.")
+                return
 
             if rolled_number < danWeight:
                 random_item = (randomDanSet[rolled_number], 'dan')
@@ -170,7 +174,8 @@ class RandomPost(commands.Cog):
         embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
         embed_obj.set_image(url=image_url)
         if isExplicit and not ctx.channel.is_nsfw():
-            embed_msg = await ctx.channel.send("|| " + image_url + " ||")
+            #embed_msg = await ctx.channel.send("|| " + image_url + " ||")
+            pass
         else:
             embed_msg = await embed_msg.edit(embed=embed_obj)
     
@@ -178,12 +183,12 @@ class RandomPost(commands.Cog):
 
         return
     
-    @commands.command(pass_context=True, aliases=['randomporn', 'randomexplicit'])
+    @commands.command(pass_context=True, aliases=['randomporn', 'randomexplicit', 'rollporn'])
     async def randomNsfw(self, ctx, *tags):
        await ctx.invoke(self.bot.get_command('randomPost'), 'rating:explicit', *tags)
 
     
-    @commands.command(pass_context=True, aliases=['randomsafe'])
+    @commands.command(pass_context=True, aliases=['randomsafe', 'rollsafe'])
     async def randomSfw(self, ctx, *tags):
         await ctx.invoke(self.bot.get_command('randomPost'), 'rating:general', *tags)
 

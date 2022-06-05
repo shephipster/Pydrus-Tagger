@@ -12,7 +12,7 @@ class TagManager(commands.Cog):
 
     @commands.command(aliases=['addtag'])
     async def tagMe(self, ctx, *tags):
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -30,7 +30,7 @@ class TagManager(commands.Cog):
 
     @commands.command(aliases=['untag', 'removeTag'])
     async def untagMe(self, ctx, *tags):
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -48,7 +48,7 @@ class TagManager(commands.Cog):
 
     @commands.command(aliases=[])
     async def blacklist(self, ctx, *tags):
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -65,7 +65,7 @@ class TagManager(commands.Cog):
 
     @commands.command(aliases=[])
     async def unblacklist(self, ctx, *tags):
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -84,7 +84,7 @@ class TagManager(commands.Cog):
     @commands.command(aliases=[])
     async def myBlacklist(self, ctx):
 
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -97,7 +97,7 @@ class TagManager(commands.Cog):
         
     @commands.command(aliases=['mytags', 'taglist'])
     async def checkTags(self, ctx):
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -118,7 +118,7 @@ class TagManager(commands.Cog):
             await ctx.channel.send("Not sure what that means. Use +help hideTags for the list you can use.")
             return
 
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -134,7 +134,7 @@ class TagManager(commands.Cog):
             
     @commands.command()
     async def addCombo(self, ctx, *tags):
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -150,7 +150,7 @@ class TagManager(commands.Cog):
     async def deleteCombo(self, ctx, id: int):
         """Removes the tag combination from your list of combos that has the given id"""
         realId = id - 1
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
@@ -291,7 +291,7 @@ class TagManager(commands.Cog):
     
     @commands.command()
     async def myCombos(self, ctx):
-        user, data = await processUser(ctx)
+        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
         if user == None or data == None:
             #there was an issue, break
             return
