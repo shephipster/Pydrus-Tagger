@@ -58,6 +58,27 @@ async def getTagsFromMD5(md5):
 
     return tags
 
+def getTagsFromMD5Sync(md5):
+    finalString = GELBOORU_MD5_URL.format(md5, '')
+    respJson = requests.get(finalString).json()
+
+    tagStr = ""
+    if 'post' in respJson:
+        items = respJson['post']
+        for i in items:
+            if('tags' in i):
+                tagStr = i['tags']
+
+    tags = set()
+
+    #Gelbooru returns the results as an array since you can technically look up multiple things at once. This is to future-proof
+    #things and prevent duplicate tags while getting them all, just in case this Service allows multiple concurrent lookups
+    tagList = str.split(tagStr)
+    for tag in tagList:
+        tags.add(tag)
+
+    return tags
+
 def checkMD5(md5):
     finalString = GELBOORU_MD5_URL.format(md5, '')
     resp = requests.get(finalString)

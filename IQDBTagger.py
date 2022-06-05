@@ -252,7 +252,7 @@ class Processor(Thread):
             try:
                 if isValidFile(HydrusApi.getMetaFromHash(fileHash)):
                     image = HydrusApi.getImageByHash(fileHash)
-                    data = IQDB.getInfoFile(image)
+                    data = IQDB.getInfoFileSync(image)
                     if not data == None:  
                         self.processFile(data, fileHash)
                 else:

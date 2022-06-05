@@ -144,7 +144,7 @@ async def getInfoDiscordFile(fp:io.BufferedIOBase):
         'urls': urls
     }
 
-def getInfoFile(file):
+async def getInfoFile(file):
     #urls
     r = getFromFile(file)
     rt = refineText(r)    
@@ -160,13 +160,47 @@ def getInfoFile(file):
         if url.find('danbooru') != -1:
             #get the id from the url and then pass it to DanbooruService
             id = re.findall('\d+', url)[0]
-            danTags = DanbooruService.getTagsFromId(id)
+            danTags = await DanbooruService.getTagsFromId(id)
             for tag in danTags:
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
             md5 = re.findall('md5=[\d|\w]+', url)[0]
             md5 = md5[4:]
-            gelTags = GelbooruService.getTagsFromMD5(md5)
+            gelTags = await GelbooruService.getTagsFromMD5(md5)
+            for tag in gelTags:
+                tags.add(tag)
+        elif url.find('e621') != -1:
+            print(url)
+            
+    
+    return {
+        'tags': tags,
+        'urls': urls
+    }
+    
+def getInfoFileSync(file):
+    #urls
+    r = getFromFile(file)
+    rt = refineText(r)    
+    if rt == None:
+        return rt
+
+    urls = getUrls(rt)
+    tags = getTags(rt)
+    
+    #now that we have urls, pull tags from those sites
+    url:str
+    for url in urls:
+        if url.find('danbooru') != -1:
+            #get the id from the url and then pass it to DanbooruService
+            id = re.findall('\d+', url)[0]
+            danTags = DanbooruService.getTagsFromIdSync(id)
+            for tag in danTags:
+                tags.add(tag)
+        elif url.find('gelbooru') != -1:
+            md5 = re.findall('md5=[\d|\w]+', url)[0]
+            md5 = md5[4:]
+            gelTags = GelbooruService.getTagsFromMD5Sync(md5)
             for tag in gelTags:
                 tags.add(tag)
         elif url.find('e621') != -1:
