@@ -22,7 +22,7 @@ class Guild(dict):
         for channel in guild.channels:
             if type(channel) == discord.channel.TextChannel:
                 cid = str(channel.id)
-                channels[cid] = Channel(channel)
+                channels[cid] = Channel(channel=channel)
 
         dict.__init__(self,
                       id=id,
@@ -60,5 +60,10 @@ class Guild(dict):
 
         if 'channels' in dict.keys():
             for channel in dict['channels']:
-                self['channels'][channel] = dict['channels'][channel]
+                id = dict['channels'][channel]['id'] if 'id' in dict['channels'][channel] else int(channel)
+                is_nsfw = dict['channels'][channel]['nsfw'] if 'nsfw' in dict['channels'][channel] else False
+                name = dict['channels'][channel]['name'] if 'name' in dict['channels'][channel] else ""
+                temp_chan = Channel(id=id, is_nsfw=is_nsfw, name=name)
+                temp_chan.setFromDict(dict['channels'][channel])
+                self['channels'][channel] = temp_chan
 

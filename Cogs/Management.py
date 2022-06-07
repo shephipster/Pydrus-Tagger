@@ -198,10 +198,6 @@ class Management(commands.Cog):
         
     @commands.command(aliases=['update'])
     async def updateGuild(self, ctx):
-        f = open(self.guildsFile)
-        data = json.load(f)
-        f.close()
-
         data = ctx.guild
         await self.updateGuildCommand(data)
 
@@ -325,3 +321,110 @@ class Management(commands.Cog):
     @commands.command(aliases=['pm', 'dm'])
     async def slide(ctx):
         await ctx.author.send("You wanted something?")
+        
+        
+    @commands.command(aliases=['safeexempt', 'exemptsafetag', 'overrulesafe', 'exemptsafe'])
+    async def overridesafe(self, ctx, superior, target):
+        """
+        Provides a channel-specific override against a global blacklist. Don't want gore anywhere but one
+        channel? Ban gore from the whole server then provide the override here. Use superior '*all*' to
+        let it ignore any tag, otherwise only a superior tag can cause the override.
+        """
+        await self.invokePowerCommand(ctx, self.overrideSafeCommand, superior, target)
+
+
+    async def overrideSafeCommand(self, ctx, guilds, guid, superior, target):
+        channel = ctx.channel
+        cid = str(channel.id)
+        
+        exemptions = guilds[guid]['channels'][cid]['safe_exemptions']
+        for exemption in exemptions:
+            if exemption == (superior, target):
+                await ctx.channel.send(f'`{superior}` already overrides `{target}`!')
+                return
+            
+        guilds[guid]['channels'][cid]['safe_exemptions'].append((superior, target))
+
+        with open(self.guildsFile, "w") as dataFile:
+            json.dump(guilds, dataFile, indent=4)
+
+        await ctx.channel.send(f"Okay, `{superior}` will now trump `{target}`. If I roll something with `{superior}` it won't matter if it also has `{target}`.")
+        
+    @commands.command(aliases=["denysafe","removesafeexemption"])
+    async def deleteSafeexemption(self, ctx, superior, target):
+        """
+        Provides a channel-specific override against a global blacklist. Don't want gore anywhere but one
+        channel? Ban gore from the whole server then provide the override here. Use superior '*all*' to
+        let it ignore any tag, otherwise only a superior tag can cause the override.
+        """
+        await self.invokePowerCommand(ctx, self.deleteOverrideSafeCommand, superior, target)
+
+
+    async def deleteOverrideSafeCommand(self, ctx, guilds, guid, superior, target):
+        channel = ctx.channel
+        cid = str(channel.id)
+        
+        exemptions = guilds[guid]['channels'][cid]['safe_exemptions']
+        for exemption in exemptions:
+            if exemption == [superior, target]:
+                guilds[guid]['channels'][cid]['safe_exemptions'].append((superior, target))
+                await ctx.channel.send(f'`{superior}` no longer overrides `{target}`!')
+                with open(self.guildsFile, "w") as dataFile:
+                    json.dump(guilds, dataFile, indent=4)
+                return
+            
+        await ctx.channel.send(f"`{superior}` already didn't exempt `{target}`!")
+        
+        
+        
+    @commands.command(aliases=['nsfwexempt', 'exemptnsfwtag', 'overrulensfw'])
+    async def overridensfw(self, ctx, superior, target):
+        """
+        Provides a channel-specific override against a global blacklist. Don't want gore anywhere but one
+        channel? Ban gore from the whole server then provide the override here. Use superior '*all*' to
+        let it ignore any tag, otherwise only a superior tag can cause the override.
+        """
+        await self.invokePowerCommand(ctx, self.overrideNsfwCommand, superior, target)
+
+
+    async def overrideNsfwCommand(self, ctx, guilds, guid, superior, target):
+        channel = ctx.channel
+        cid = str(channel.id)
+        
+        exemptions = guilds[guid]['channels'][cid]['nsfw_exemptions']
+        for exemption in exemptions:
+            if exemption == (superior, target):
+                await ctx.channel.send(f'`{superior}` already overrides `{target}`!')
+                return
+            
+        guilds[guid]['channels'][cid]['nsfw_exemptions'].append((superior, target))
+
+        with open(self.guildsFile, "w") as dataFile:
+            json.dump(guilds, dataFile, indent=4)
+
+        await ctx.channel.send(f"Okay, `{superior}` will now trump `{target}`. If I roll something with `{superior}` it won't matter if it also has `{target}`.")
+        
+    @commands.command(aliases=["denynsfw","removensfwexemption"])
+    async def deleteSafeexemption(self, ctx, superior, target):
+        """
+        Provides a channel-specific override against a global blacklist. Don't want gore anywhere but one
+        channel? Ban gore from the whole server then provide the override here. Use superior '*all*' to
+        let it ignore any tag, otherwise only a superior tag can cause the override.
+        """
+        await self.invokePowerCommand(ctx, self.deleteOverrideNsfwCommand, superior, target)
+
+
+    async def deleteOverrideNsfwCommand(self, ctx, guilds, guid, superior, target):
+        channel = ctx.channel
+        cid = str(channel.id)
+        
+        exemptions = guilds[guid]['channels'][cid]['nsfw_exemptions']
+        for exemption in exemptions:
+            if exemption == [superior, target]:
+                guilds[guid]['channels'][cid]['nsfw_exemptions'].append((superior, target))
+                await ctx.channel.send(f'`{superior}` no longer overrides `{target}`!')
+                with open(self.guildsFile, "w") as dataFile:
+                    json.dump(guilds, dataFile, indent=4)
+                return
+            
+        await ctx.channel.send(f"`{superior}` already didn't exempt `{target}`!")

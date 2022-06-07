@@ -87,17 +87,28 @@ class RandomPost(commands.Cog):
                 image_url = random_item[0]['file_url']
                 isExplicit = random_item[0]['rating'] == 'explicit'
                 
+            marked_tags = []
             #Safety filter, if it's loli and explicit re-roll that junk
             for tag in tag_list:
-                if tag in bannedTags:
-                    roll = True
-                    #print('skipped a post becase of', tag)
-                    break
-                if isExplicit and tag in bannedPorn:
-                    roll = True
-                    #print('skipped a post because of', tag)
-                    break
-                
+                if tag in bannedTags or (isExplicit and tag in bannedPorn): 
+                    if not any([tag, '*all*'] in exemption for exemption in data[guid]['channels'][cid]['exemptions'] ):               
+                        marked_tags.append(tag)
+            if marked_tags != []:
+                for tag in tag_list:
+                    if marked_tags == []:
+                        break   #reduce cost measure
+                    else:    
+                        for marked_tag in marked_tags:
+                            test_pair = [tag, marked_tag]
+                            if any(test_pair == exemption for exemption in data[guid]['channels'][cid]['safe_exemptions']) and not isExplicit:
+                                marked_tags.remove(marked_tag)
+                            if any(test_pair == exemption for exemption in data[guid]['channels'][cid]['nsfw_exemptions']) and isExplicit:
+                                marked_tags.remove(marked_tag)
+                        
+            if marked_tags != []:
+                roll = True
+                continue       
+  
             if isExplicit and not ctx.channel.is_nsfw():
                 #nsfw rolled in sfw channel, try again
                 roll = True
