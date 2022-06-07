@@ -9,7 +9,6 @@ from Services.GelbooruService import getRandomSetWithTags as gelSet
 from Services.DanbooruService import getRandomSetWithTags as danSet
 
 from Utilities.ProcessUser import processUser
-from tester import mistakenTagSearcher
 
 # https://discordpy.readthedocs.io/en/stable/ext/commands/cogs.html#ext-commands-cogs
 
@@ -169,7 +168,7 @@ class RandomPost(commands.Cog):
             'is_explicit': False
         }
         
-        search_set = mistakenTagSearcher(query_set)
+        search_set = self.mistakenTagSearcher(query_set)
         for entry in search_set:
             randomDanSet = await danSet(entry)
             randomGelSet = await gelSet(entry)

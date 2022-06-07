@@ -14,3 +14,7 @@ tester.py
 guilds.json
 .vscode/launch.json
 Cogs/__pycache__/*
+backups/bfa65e6ec395aa2b39a4f083003b0c95db3cea0c3530fe44db11317687c893eb.png
+.gitignore
+backups/users.json
+backups/imageLog.json
