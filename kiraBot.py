@@ -27,7 +27,7 @@ from Entities import Post
 from Services import TwitterService
 
 load_dotenv()
-DEBUG = True  # set to false for live versions
+DEBUG = True # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -117,7 +117,7 @@ async def on_message(message):
 			for attachment in message.attachments:
 				file = await attachment.to_file()
 				file = file.fp
-				data = IQDB.getInfoDiscordFile(file)
+				data = await IQDB.getInfoDiscordFile(file)
 				if data != None and not 'error' in data:
 					tag_list = data['tags']
 					await ping_people(message, tag_list, exempt_user=message.author)
