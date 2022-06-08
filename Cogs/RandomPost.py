@@ -175,6 +175,11 @@ class RandomPost(commands.Cog):
 
             if 'post' in randomGelSet:
                 randomGelSet = randomGelSet['post']
+                
+            if 'success' in randomDanSet and randomDanSet['success'] == False:
+                print("Failed to log into Danbooru")
+                print(randomDanSet)
+                randomDanSet = []
             
             full_set = []
             for entry in randomDanSet:
@@ -187,17 +192,22 @@ class RandomPost(commands.Cog):
 
             for i in range(ROLL_LIMIT):
 
-                rolled_number = randint(0, len(full_set))            
+                rolled_number = randint(0, len(full_set) - 1)            
                 random_item = full_set[rolled_number]
 
-                if random_item[1] == 'dan':
-                    tag_list = random_item[0]['tag_string'].split()
-                    image_url = random_item[0]['file_url']
-                    isExplicit = random_item[0]['rating'] == 'e'
-                elif random_item[1] == 'gel':
-                    tag_list = random_item[0]['tags'].split()
-                    image_url = random_item[0]['file_url']
-                    isExplicit = random_item[0]['rating'] == 'explicit'
+                try:
+                    if random_item[1] == 'dan':
+                        tag_list = random_item[0]['tag_string'].split()
+                        image_url = random_item[0]['file_url']
+                        isExplicit = random_item[0]['rating'] == 'e'
+                    elif random_item[1] == 'gel':
+                        tag_list = random_item[0]['tags'].split()
+                        image_url = random_item[0]['file_url']
+                        isExplicit = random_item[0]['rating'] == 'explicit'
+                except Exception as e:
+                    print(randomDanSet)
+                    print(random_item)
+                    print(e)
                     
                 marked_tags = []
                 for tag in tag_list:
