@@ -182,7 +182,7 @@ class RandomPost(commands.Cog):
             for entry in randomGelSet:
                 full_set.append((entry, 'gel'))
             
-            if len(full_set) == 0:
+            if len(full_set) == 0 or full_set == [('@attributes', 'gel')]:
                 continue    #no results, move to next one
 
             for i in range(ROLL_LIMIT):
