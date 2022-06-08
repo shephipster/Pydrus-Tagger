@@ -1,10 +1,12 @@
 import asyncio
+import datetime
 import html
 import json
 import os
 import re
 import time
 from io import BytesIO
+import traceback
 
 import discord
 import imagehash
@@ -256,6 +258,13 @@ async def on_command_error(ctx, error):
 	print(error)
 	return
 
+@bot.event
+async def on_error(event, *args, **kwargs):
+    embed = discord.Embed(title=':x: Event Error', colour=0xe74c3c) #Red
+    embed.add_field(name='Event', value=event)
+    embed.description = '```py\n%s\n```' % traceback.format_exc()
+    embed.timestamp = datetime.datetime.utcnow()
+    await bot.AppInfo.owner.send(embed=embed)
 
 #region old_tagging_code
 #This code does work, and it works well. However, with the new sauceNaoApi it's not
