@@ -104,7 +104,7 @@ class RandomPost(commands.Cog):
 
         for i in range(len(sources)):
             if re.match('https?://', sources[i]) == None:
-                sources[i] = "https://" + sources[i]
+                sources[i] = "http://" + sources[i]
 
         description = '\n'.join(sources)
 
