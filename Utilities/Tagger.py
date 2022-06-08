@@ -34,6 +34,7 @@ class Tagger:
         cleanTag = cleanTag.replace('&quot;', '\"')
         cleanTag = cleanTag.replace('&lt;', '<')
         cleanTag = cleanTag.replace('&gt;', '>')
+        cleanTag = cleanTag.lower()
         return cleanTag
 
     def getGelbooruTags(references):

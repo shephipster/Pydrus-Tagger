@@ -252,7 +252,7 @@ class Processor(Thread):
             try:
                 if isValidFile(HydrusApi.getMetaFromHash(fileHash)):
                     image = HydrusApi.getImageByHash(fileHash)
-                    data = IQDB.getInfo(image)
+                    data = IQDB.getInfoFileSync(image)
                     if not data == None:  
                         self.processFile(data, fileHash)
                 else:
@@ -260,7 +260,7 @@ class Processor(Thread):
             except Exception as e:
                  print("Exception:", e)
                  print("Failed hash:", fileHash)
-                 print(f'{fileHash}\n', file = open('tempFiles/failedHashes.txt', 'a', encoding='utf-8'))
+                 print(f'{fileHash}', file = open('tempFiles/failedHashes.txt', 'a', encoding='utf-8'))
             finally:    
                 fio.addHash(fileHash)
                 self.filesToHandle.remove(fileHash)            
@@ -272,7 +272,6 @@ class Processor(Thread):
                 time.sleep(5) 
                 if self.count % 50 == 0:
                     time.sleep(25)
-        self.join()
 
     def processFile(self, data, hash):
         tags = data['tags']
@@ -281,7 +280,10 @@ class Processor(Thread):
             if not url.startswith("http://") and not url.startswith("https://"):
                 url = "http://" + url
             HydrusApi.addKnownURLToFileByHash(hash, url)
-            HydrusApi.uploadURL(str(url), title="PyQDB")
+            #Omit urls of anime-pictures, e-shuushuu ,  and zerochan . They pretty much always fails and slow down Hydrus processing
+            ignored_urls = ['zerochan','e-shuushuu', 'anime-pictures']
+            if not any(iurl in str(url) for iurl in ignored_urls):
+                HydrusApi.uploadURL(str(url), title="PyQDB")
         for tag in tags:
             HydrusApi.addTagByHash(hash, tag)
 
