@@ -68,6 +68,7 @@ class RandomPost(commands.Cog):
         image_url = rolled_data['image_url']
         tag_list = rolled_data['tag_list']
         is_explicit = rolled_data['is_explicit']
+        title = rolled_data['title']
         
     
         bot_avatar = self.bot.user.avatar_url
@@ -89,11 +90,11 @@ class RandomPost(commands.Cog):
 
         embed_msg = await ctx.channel.send(embed=embed_obj)
 
-        await self.updateRolledImage(sources=sources, ctx=ctx, embed_msg=embed_msg, image_url=image_url, tag_list=tag_list, isExplicit=is_explicit)
+        await self.updateRolledImage(sources=sources, ctx=ctx, embed_msg=embed_msg, image_url=image_url, tag_list=tag_list, isExplicit=is_explicit, title=title)
         return 1
     
     #Blocking calls
-    async def updateRolledImage(self, ctx, sources, embed_msg, image_url, tag_list, isExplicit):
+    async def updateRolledImage(self, ctx, sources, embed_msg, image_url, tag_list, isExplicit, title=None):
         extra_data = await IQDBService.getInfoUrl(image_url)
         bot_avatar = self.bot.user.avatar_url
         bot_image = bot_avatar.BASE + bot_avatar._url
@@ -103,10 +104,13 @@ class RandomPost(commands.Cog):
                     sources.append(url)
 
         for i in range(len(sources)):
-            if re.match('https?://', sources[i]) == None:
+            if re.match('https?://', sources[i]) == None and sources[1] != title:
                 sources[i] = "https://" + sources[i]
 
-        description = '\n'.join(sources)
+        if title != '':
+            description = "Title: " + title + '\n' + '\n'.join(sources)
+        else:
+            description = '\n'.join(sources)
 
         #update embed
 
@@ -165,7 +169,8 @@ class RandomPost(commands.Cog):
             'sources': [],
             'image_url': "",
             'tag_list': [],
-            'is_explicit': False
+            'is_explicit': False,
+            'title': None
         }
         
         search_set = self.mistakenTagSearcher(query_set)
@@ -184,10 +189,11 @@ class RandomPost(commands.Cog):
             full_set = []
             for entry in randomDanSet:
                 full_set.append((entry, 'dan'))
-            for entry in randomGelSet:
-                full_set.append((entry, 'gel'))
+            if '@attributes' not in randomGelSet or randomGelSet['@attributes']['count'] != 0:
+                for entry in randomGelSet:
+                    full_set.append((entry, 'gel'))
             
-            if len(full_set) == 0 or full_set == [('@attributes', 'gel')]:
+            if len(full_set) == 0:
                 continue    #no results, move to next one
 
             for i in range(ROLL_LIMIT):
@@ -198,7 +204,11 @@ class RandomPost(commands.Cog):
                 try:
                     if random_item[1] == 'dan':
                         tag_list = random_item[0]['tag_string'].split()
-                        image_url = random_item[0]['file_url']
+                        if 'file_url' in random_item[0]:
+                            image_url = random_item[0]['file_url'] 
+                            data['title'] = random_item[0]['source'] if not isURL(random_item[0]['source']) else ''
+                        else:
+                            image_url = random_item[0]['source']
                         isExplicit = random_item[0]['rating'] == 'e'
                     elif random_item[1] == 'gel':
                         tag_list = random_item[0]['tags'].split()
@@ -246,10 +256,16 @@ class RandomPost(commands.Cog):
                                 f'https://gelbooru.com/index.php?page=post&s=view&id={ post_id }')
                     image_url = random_item[0]['file_url']
                 elif random_item[1] == 'dan':
-                    post_id = random_item[0]['id']
-                    sources.append(random_item[0]['source'])
-                    sources.append(f'https://danbooru.donmai.us/posts/{post_id}')
-                    image_url = random_item[0]['file_url']
+                    if 'id' in random_item[0]:
+                        post_id = random_item[0]['id'] 
+                        sources.append(f'https://danbooru.donmai.us/posts/{post_id}')
+                        sources.append(random_item[0]['source'])
+                    else:
+                        continue                    
+                    if 'file_url' in random_item[0]:
+                        image_url = random_item[0]['file_url']
+                    else:
+                        continue
             
                 for source in sources:
                     if source.strip() == '':
@@ -262,3 +278,12 @@ class RandomPost(commands.Cog):
                 return data
                 
         return None
+    
+def isURL(query:str):
+    isUrl = False
+    isUrl = isUrl | (re.search("https?://", query) != None)
+    isUrl = isUrl | (re.search(".com", query) != None)
+    isUrl = isUrl | (re.search(".net", query) != None)
+    isUrl = isUrl | (re.search(".org", query) != None)
+    isUrl = isUrl | (re.search(".gov", query) != None)
+    return isUrl

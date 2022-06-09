@@ -35,8 +35,9 @@ async def getRandomSetWithTags(*tags):
     tagList = ""
     for tag in tags[0]:
         tagList += tag + " "
+
     tagList = tagList[:-1]
-    url = "" + DANBOORU_URL + f"/posts.json?random&tags=" + tagList
+    url = "" + DANBOORU_URL + f"/posts.json?&tags=" + tagList + "+random%3A500"
     async with aiohttp.ClientSession() as session:
         async with session.get(url, ssl=False) as r:
             json_load = await r.json()
