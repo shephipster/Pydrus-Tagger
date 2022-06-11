@@ -70,10 +70,13 @@ class RandomPost(commands.Cog):
         is_explicit = rolled_data['is_explicit']
         title = rolled_data['title']
         
-    
+        if title != '':
+            description = 'Title: ' + title + '\n' + '\n'.join(sources)
+        else:
+            description = '\n'.join(sources)
         bot_avatar = self.bot.user.avatar_url
         bot_image = bot_avatar.BASE + bot_avatar._url
-        description = '\n'.join(sources)
+        
 
         #await ctx.channel.send("Alright, here's your random post. Don't blame me if it's cursed.")
         if image_url.endswith('.mp4'):
@@ -94,7 +97,7 @@ class RandomPost(commands.Cog):
         return 1
     
     #Blocking calls
-    async def updateRolledImage(self, ctx, sources, embed_msg, image_url, tag_list, isExplicit, title=None):
+    async def updateRolledImage(self, ctx, sources:list, embed_msg, image_url, tag_list, isExplicit, title=None):
         extra_data = await IQDBService.getInfoUrl(image_url)
         bot_avatar = self.bot.user.avatar_url
         bot_image = bot_avatar.BASE + bot_avatar._url
@@ -102,7 +105,9 @@ class RandomPost(commands.Cog):
             for url in extra_data['urls']:
                 if url not in sources:
                     sources.append(url)
-
+        
+        if title in sources:
+            sources.remove(title)
         for i in range(len(sources)):
             if re.match('https?://', sources[i]) == None and sources[1] != title:
                 sources[i] = "https://" + sources[i]
@@ -205,7 +210,7 @@ class RandomPost(commands.Cog):
                     if random_item[1] == 'dan':
                         tag_list = random_item[0]['tag_string'].split()
                         if 'file_url' in random_item[0]:
-                            image_url = random_item[0]['file_url'] 
+                            image_url = random_item[0]['large_file_url'] 
                             data['title'] = random_item[0]['source'] if not isURL(random_item[0]['source']) else ''
                         else:
                             image_url = random_item[0]['source']
@@ -259,7 +264,7 @@ class RandomPost(commands.Cog):
                     if 'id' in random_item[0]:
                         post_id = random_item[0]['id'] 
                         sources.append(f'https://danbooru.donmai.us/posts/{post_id}')
-                        sources.append(random_item[0]['source'])
+                        sources.append(random_item[0]['source']) if isURL(random_item[0]['source']) else ''
                     else:
                         continue                    
                     if 'file_url' in random_item[0]:

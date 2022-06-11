@@ -1,5 +1,4 @@
 #Handles requests and actually getting the tags from Danbooru given either a url or an id
-from urllib import response
 import requests
 
 import os
@@ -11,11 +10,20 @@ DANBOORU_URL = "https://danbooru.donmai.us"
 API_KEY = os.getenv('DANBOORU_API_KEY')
 USERNAME = os.getenv('DANBOORU_USERNAME')
 
+async def validateLogin():
+    url = f"https://{USERNAME}:{API_KEY}@danbooru.donmai.us/profile.json?"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as r:
+            json_load = await r.json()
+            r.close()
+            return json_load
+
 async def getTagsFromId(id):
     url = 'https://danbooru.donmai.us/posts/{0}'.format(str(id) + ".json")
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, ssl=False) as r:
+        async with session.get(url) as r:
             respJson = await r.json()
+            r.close()
 
     tags = str.split(respJson["tag_string"])
     return tags
@@ -32,15 +40,18 @@ def getTagsFromUrl(url):
     return
 
 async def getRandomSetWithTags(*tags):
+    # login_results = await validateLogin()
+    # print(login_results)
     tagList = ""
     for tag in tags[0]:
         tagList += tag + " "
 
     tagList = tagList[:-1]
-    url = "" + DANBOORU_URL + f"/posts.json?&tags=" + tagList + "+random%3A500"
+    url = "" + DANBOORU_URL + f"/posts.json?&tags=" + tagList + f"+random%3A500&api_key={API_KEY}&login={USERNAME}"
     async with aiohttp.ClientSession() as session:
-        async with session.get(url, ssl=False) as r:
+        async with session.get(url) as r:
             json_load = await r.json()
+            r.close()
             return json_load
 
 
