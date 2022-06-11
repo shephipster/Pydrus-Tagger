@@ -1,4 +1,4 @@
-import asyncio
+
 import datetime
 import html
 import json
@@ -29,7 +29,7 @@ from Entities import Post
 from Services import TwitterService
 
 load_dotenv()
-DEBUG = True # set to false for live versions
+DEBUG = False # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -129,7 +129,7 @@ async def on_message(message):
 		elif message.embeds:
 			for embed in message.embeds:
 				imageLink = embed.url
-				data = IQDB.getInfoUrl(imageLink)
+				data = await IQDB.getInfoUrl(imageLink)
 				if data != None:
 					tag_list = data['tags']
 					await ping_people(message, tag_list)
@@ -143,9 +143,9 @@ async def on_message(message):
 async def on_message_edit(before, after):
     #If a message is edited from a standard Twitter link to a custom one, the bot will create an embed and post it in the channel. While not as pretty as vx/fx twitter, it doesn't rely on external websites
 	#and everything is in-memory so it's not physically capable of spying on what you use it for. Other sites to come. Pixiv would be next but they don't have an api so...
-	if re.search(f"https?://twitter.com/[\S]+/status/[0-9]+(\?[\S]+)*", before.content) != None and re.search(f"https?://{EMBED_FIX_PREFIX}twitter.com/[\D]+/status/[0-9]+(\?[\S]+)*", after.content) != None:
+	if re.search(f"https?://twitter.com/[a-zA-Z0-9]+/status/[0-9]+(\?[\S]+)*", before.content) != None and re.search(f"https?://{EMBED_FIX_PREFIX}twitter.com/[a-zA-Z0-9]+/status/[0-9]+(\?[\S]+)*", after.content) != None:
 		parsed_text = re.search(
-		    f"(https?://twitter.com/[\S]+/status/[0-9]+)(\?[\S]+)*", before.content)
+		    f"(https?://twitter.com/[a-zA-Z0-9]+/status/[0-9]+)(\?[\S]+)*", before.content)
 		parsed_text = parsed_text.group(1)
 		tweet_meta = TwitterService.get_tweet_meta_from_link(parsed_text)
 		embed_type = TwitterService.tweetType(tweet_meta['raw_data'])
