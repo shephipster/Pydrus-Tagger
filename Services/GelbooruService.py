@@ -1,16 +1,16 @@
 import aiohttp
 import requests
 import random
-#import os
-#from dotenv import load_dotenv
+import os
+from dotenv import load_dotenv
 
-#load_dotenv()
+load_dotenv()
 
 GELBOORU_URL = "http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&id={0}{1}"
 GELBOORU_MD5_URL = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&tags=md5%3a{0}{1}"
 
 #Don't think the key is needed for GET
-#GELBOORU_KEY = os.getenv('GELBOORU_API_KEY')
+GELBOORU_KEY = os.getenv('GELBOORU_API_KEY')
 
 def getTagsFromId(id):
     #finalString = GELBOORU_URL.format(GELBOORU_KEY, id)

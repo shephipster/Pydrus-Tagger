@@ -29,7 +29,7 @@ from Entities import Post
 from Services import TwitterService
 
 load_dotenv()
-DEBUG = False # set to false for live versions
+DEBUG = True # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -85,6 +85,8 @@ async def on_guild_join(guild):
 @bot.event
 async def on_ready():
 	initFiles()
+	if not hasattr(bot, 'appinfo'):
+		bot.appinfo = await bot.application_info()
 	await manager.updateAllGuilds()
 	print('Running')
 
@@ -264,7 +266,7 @@ async def on_error(event, *args, **kwargs):
     embed.add_field(name='Event', value=event)
     embed.description = '```py\n%s\n```' % traceback.format_exc()
     embed.timestamp = datetime.datetime.utcnow()
-    await bot.AppInfo.owner.send(embed=embed)
+    await bot.appinfo.owner.send(embed=embed)
 
 #region old_tagging_code
 #This code does work, and it works well. However, with the new sauceNaoApi it's not
