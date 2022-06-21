@@ -266,7 +266,7 @@ def getSauceNaoLink(res):
         url = re.findall(regex, text)[0]
     except IndexError:
         url = None
-    url = "https://saucenao.com/search.php?db=999&dbmaski=32768&url=" + url
+    url = "https://saucenao.com/search.php?db=999&dbmaski=32768&url=" + url if url != None else None
     return url
 
 if __name__ == "__main__":
