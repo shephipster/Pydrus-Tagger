@@ -25,11 +25,12 @@ from Cogs.RandomPost import RandomPost
 from Cogs.Source import Source
 from Cogs.TagManager import TagManager
 from Cogs.UserManagement import UserManagement
+from Cogs.Status import Status
 from Entities import Post
 from Services import TwitterService
 
 load_dotenv()
-DEBUG = True # set to false for live versions
+DEBUG = True  # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
@@ -73,6 +74,7 @@ bot.add_cog(RandomPost(bot))
 bot.add_cog(Source(bot))
 bot.add_cog(TagManager(bot))
 bot.add_cog(UserManagement(bot))
+bot.add_cog(Status(bot))
 manager = bot.get_cog('Management')
 
 
@@ -84,10 +86,17 @@ async def on_guild_join(guild):
 
 @bot.event
 async def on_ready():
+	activity = discord.Game(
+		name="getting ready",
+	)
+	
+	await bot.change_presence(activity=activity)
+ 
 	initFiles()
 	if not hasattr(bot, 'appinfo'):
 		bot.appinfo = await bot.application_info()
-	await manager.updateAllGuilds()
+	await manager.updateAllGuilds()	
+
 	print('Running')
 
 
@@ -99,7 +108,6 @@ def initFiles():
 	if not os.path.exists(guildsFile):
 		with open(guildsFile, 'a') as file:
 			file.write("{\n}")
-
 
 @bot.event
 async def on_message(message):
@@ -260,9 +268,10 @@ async def on_command_error(ctx, error):
 	print(error)
 	return
 
+
 @bot.event
 async def on_error(event, *args, **kwargs):
-    embed = discord.Embed(title=':x: Event Error', colour=0xe74c3c) #Red
+    embed = discord.Embed(title=':x: Event Error', colour=0xe74c3c)  # Red
     embed.add_field(name='Event', value=event)
     embed.description = '```py\n%s\n```' % traceback.format_exc()
     embed.timestamp = datetime.datetime.utcnow()
