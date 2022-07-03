@@ -70,7 +70,7 @@ class RandomPost(commands.Cog):
         is_explicit = rolled_data['is_explicit']
         title = rolled_data['title']
         
-        if title != '':
+        if title != '' and title != None:
             description = 'Title: ' + title + '\n' + '\n'.join(sources)
         else:
             description = '\n'.join(sources)
@@ -112,7 +112,7 @@ class RandomPost(commands.Cog):
             if re.match('https?://', sources[i]) == None and sources[1] != title:
                 sources[i] = "https://" + sources[i]
 
-        if title != '':
+        if title != '' and title != None:
             description = "Title: " + title + '\n' + '\n'.join(sources)
         else:
             description = '\n'.join(sources)
@@ -127,7 +127,6 @@ class RandomPost(commands.Cog):
         embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
         embed_obj.set_image(url=image_url)
         if isExplicit and not ctx.channel.is_nsfw():
-            #embed_msg = await ctx.channel.send("|| " + image_url + " ||")
             pass
         else:
             embed_msg = await embed_msg.edit(embed=embed_obj)

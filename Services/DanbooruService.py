@@ -4,6 +4,8 @@ import requests
 import os
 import aiohttp
 import random
+from dotenv import load_dotenv
+load_dotenv()
 
 DANBOORU_URL = "https://danbooru.donmai.us"
 #DANBOORU_URL = "https://testbooru.donmai.us"    #This is the test server, use this one for now
