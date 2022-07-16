@@ -57,11 +57,14 @@ class Source(commands.Cog):
             for attachment in ctx.message.attachments:
                 imageLink = attachment.url
                 data = await IQDBService.getInfoUrl(imageLink)
-                tag_list = data['tags']
-                output = "The tag list for that image is: "
-                for tag in tag_list:
-                    output = output + tag + ", "
+                if data == None:
+                    #no result was found, sauceNao couldn't find anything
+                    output = "Sorry, I couldn't find anything like it on IQDB."
+                else: 
+                    tag_list = data['tags']
+                    output = "The tag list for that image is: "
+                    output += ', '.join(tag_list)
 
-                await ctx.channel.send(output[:-2])
+                await ctx.channel.send(output)
                 
     
