@@ -48,13 +48,16 @@ class Source(commands.Cog):
                 # await ctx.channel.send(output)
                 await ctx.reply(embed=embed_obj)
                 
-    @commands.command(aliases=['tags'])
+    @commands.command(aliases=['tags','tagsFor'])
     async def getTagsFor(self, ctx):
         """ Gets the tags for a given image """
         if not ctx.message.attachments:
             await ctx.channel.send("You have to give me an image to look up you know.")
         else:
+            count = 1
             for attachment in ctx.message.attachments:
+                await ctx.channel.send(f"Looking up the tags for picture #{count}...")
+                count += 1
                 imageLink = attachment.url
                 data = await IQDBService.getInfoUrl(imageLink)
                 if data == None:
@@ -62,8 +65,9 @@ class Source(commands.Cog):
                     output = "Sorry, I couldn't find anything like it on IQDB."
                 else: 
                     tag_list = data['tags']
-                    output = "The tag list for that image is: "
+                    output = "The tag list for that image is: `"
                     output += ', '.join(tag_list)
+                    output += '`'
 
                 await ctx.channel.send(output)
                 
