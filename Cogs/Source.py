@@ -56,7 +56,7 @@ class Source(commands.Cog):
         else:
             for attachment in ctx.message.attachments:
                 imageLink = attachment.url
-                data = IQDBService.getInfoUrl(imageLink)
+                data = await IQDBService.getInfoUrl(imageLink)
                 tag_list = data['tags']
                 output = "The tag list for that image is: "
                 for tag in tag_list:
