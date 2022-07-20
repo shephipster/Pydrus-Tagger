@@ -13,7 +13,7 @@ class Source(commands.Cog):
         if not ctx.message.attachments:
             await ctx.channel.send("You have to give me an image to look up you know.")
         else:
-            ctx.channel.send("Alright, lemme see if I can't find out where these are from...")
+            await ctx.channel.send("Alright, lemme see if I can't find out where these are from...")
             for attachment in ctx.message.attachments:
                 file = await attachment.to_file()
                 file_url = attachment.url
