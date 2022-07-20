@@ -30,35 +30,42 @@ class RandomPost(commands.Cog):
         Args:
             ctx (_type_): Context of the message, passed in automatically by discord.
         """
-
-        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
-        if user == None or data == None:
-            #there was an issue, break
-            return -1
-
+        await ctx.channel.send("Alright, gimme a second to find something for you...")
+        safe_exemptions = []
+        nsfw_exemptions = []
+        bannedTags = []
+        bannedPorn = []
+        
         cleaned_tags = []
         for tag in tags:
             cleaned_tags.append(tag.replace('`', ''))
-
-        guid = str(ctx.guild.id)
-        cid = str(ctx.channel.id)
-        bannedTags = []
-        bannedPorn = []
-
-        for tag in data[guid]['bannedExplicitTags']:
-            bannedPorn.append(tag)
-        for tag in data[guid]['bannedGeneralTags']:
-            bannedTags.append(tag)
-        for tag in data[guid]['channels'][cid]['bannedTags']:
-            bannedTags.append(tag)
-        for tag in data[guid]['channels'][cid]['bannedNSFWTags']:
-            bannedPorn.append(tag)
-            
-        safe_exemptions = data[guid]['channels'][cid]['safe_exemptions']
-        nsfw_exemptions = data[guid]['channels'][cid]['nsfw_exemptions']
         
-        rolled_data = await self.getImageFromTags(banned_tags=bannedTags, banned_porn=bannedPorn, query_set=cleaned_tags,
-                                                  safe_exemptions=safe_exemptions, nsfw_exemptions=nsfw_exemptions, channel_explicit=ctx.channel.is_nsfw() )
+        if ctx.guild != None:   #originated from a guild, fetch the lists and exemptions
+            user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
+            if user == None or data == None:
+                #there was an issue, break
+                return -1            
+
+            guid = str(ctx.guild.id)
+            cid = str(ctx.channel.id)
+
+            for tag in data[guid]['bannedExplicitTags']:
+                bannedPorn.append(tag)
+            for tag in data[guid]['bannedGeneralTags']:
+                bannedTags.append(tag)
+            for tag in data[guid]['channels'][cid]['bannedTags']:
+                bannedTags.append(tag)
+            for tag in data[guid]['channels'][cid]['bannedNSFWTags']:
+                bannedPorn.append(tag)
+                
+            safe_exemptions = data[guid]['channels'][cid]['safe_exemptions']
+            nsfw_exemptions = data[guid]['channels'][cid]['nsfw_exemptions']
+        
+            rolled_data = await self.getImageFromTags(banned_tags=bannedTags, banned_porn=bannedPorn, query_set=cleaned_tags,
+                                                    safe_exemptions=safe_exemptions, nsfw_exemptions=nsfw_exemptions, channel_explicit=ctx.channel.is_nsfw() )
+        else:   #from inside a dm. We'll assume they're fine with it
+            rolled_data = await self.getImageFromTags(banned_tags=bannedTags, banned_porn=bannedPorn, query_set=cleaned_tags,
+                                                    safe_exemptions=safe_exemptions, nsfw_exemptions=nsfw_exemptions, channel_explicit=True )
 
         if rolled_data == None:
             await ctx.channel.send('Sorry, I couldn\'t find anything with those tags.')

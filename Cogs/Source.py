@@ -13,6 +13,7 @@ class Source(commands.Cog):
         if not ctx.message.attachments:
             await ctx.channel.send("You have to give me an image to look up you know.")
         else:
+            ctx.channel.send("Alright, lemme see if I can't find out where these are from...")
             for attachment in ctx.message.attachments:
                 file = await attachment.to_file()
                 file_url = attachment.url
@@ -64,7 +65,8 @@ class Source(commands.Cog):
                     #no result was found, sauceNao couldn't find anything
                     output = "Sorry, I couldn't find anything like it on IQDB."
                 else: 
-                    tag_list = data['tags']
+                    tag_list:set = data['tags']
+                    tag_list = sorted(tag_list)
                     output = "The tag list for that image is: `"
                     output += ', '.join(tag_list)
                     output += '`'
