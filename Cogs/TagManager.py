@@ -1,9 +1,10 @@
 import json
 import os
-import discord
 from discord.ext import commands
 
 from Utilities.ProcessUser import processUser
+from sql import Database
+
 
 class TagManager(commands.Cog):
     def __init__(self, bot):
@@ -12,100 +13,75 @@ class TagManager(commands.Cog):
 
     @commands.command(aliases=['addtag'])
     async def tagMe(self, ctx, *tags):
-        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
-        if user == None or data == None:
-            #there was an issue, break
-            return
+        if not ctx.guild:
+            await ctx.channel.send("Sorry, I can't do this in DMs")
 
+        # Migrate to the SQLite database
         for tag in tags:
-            if tag not in user.tags:
-                user.tags.append(tag.lower())
+            Database.addTagToUser(tag, ctx)
 
-        with open(self.guildsFile, "w") as dataFile:
-            json.dump(data, dataFile, indent=4)
-
-        await ctx.channel.send(f"Alright, I added {tags} to your tags.")
-        return
-
+        await ctx.channel.send(f"Alright, I added `{', '.join(tags)}` to your tags.")
 
     @commands.command(aliases=['untag', 'removeTag'])
     async def untagMe(self, ctx, *tags):
-        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
-        if user == None or data == None:
-            #there was an issue, break
-            return
+        if not ctx.guild:
+            await ctx.channel.send("Sorry, I can't do this in DMs")
 
+        # Migrate to the SQLite database
         for tag in tags:
-            if tag in user.tags:
-                user.tags.remove(tag)
+            Database.removeTagFromUser(tag, ctx)
 
-        with open(self.guildsFile, "w") as dataFile:
-            json.dump(data, dataFile, indent=4)
-
-        await ctx.channel.send(f"Okay, I took {tags} out of your tags list.")
-        return
-
+        await ctx.channel.send(f"Okay, I took `{', '.join(tags)}` out of your tags list.")
 
     @commands.command(aliases=[])
     async def blacklist(self, ctx, *tags):
-        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
-        if user == None or data == None:
-            #there was an issue, break
-            return
+        if not ctx.guild:
+            await ctx.channel.send("Sorry, I can't do this in DMs")
 
+        # Migrate to the SQLite database
         for tag in tags:
-            if tag not in user.blacklist:
-                user.blacklist.append(tag)
+            Database.addBlacklistToUser(tag, ctx)
 
-        with open(self.guildsFile, "w") as dataFile:
-            json.dump(data, dataFile, indent=4)
-
-        await ctx.channel.send("Alright, I update your blacklist for you.")
-
+        await ctx.channel.send(f"Alright, I added `{', '.join(tags)}` to your blacklist.")
 
     @commands.command(aliases=[])
     async def unblacklist(self, ctx, *tags):
-        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
-        if user == None or data == None:
-            #there was an issue, break
-            return
-
+        if not ctx.guild:
+            await ctx.channel.send("Sorry, I can't do this in DMs")
+            
+        # Migrate to the SQLite database
         for tag in tags:
-            if tag in user.blacklist:
-                user.blacklist.remove(tag)
-        message = "Alright, your blacklist doesn't have any of that in it anymore."
+            Database.removeBlacklistFromUser(tag, ctx)
 
-        with open(self.guildsFile, "w") as dataFile:
-            json.dump(data, dataFile, indent=4)
-
-        await ctx.send(message)
+        await ctx.channel.send(f"Alright, I removed `{', '.join(tags)}` frpm your blacklist.")
 
 
     @commands.command(aliases=[])
     async def myBlacklist(self, ctx):
-
-        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
-        if user == None or data == None:
-            #there was an issue, break
+        tags = Database.getBlacklist(user_id = ctx.author.id, guild_id = ctx.guild.id)
+        tag_set = []
+        if not tags:
+            await ctx.channel.send("You don't have any blacklisted tags yet.")
             return
-        uid = str(ctx.author.id)
-        guid = str(ctx.guild.id)
-
-        response = "Your blacklist is: " + \
-            ", ".join(data[guid]['users'][uid]['blacklist'])
-        await ctx.channel.send(response)
+        for tag in tags:
+            tag_set.append(tag[3])
+        message = "Your blacklisted tags are: `"
+        message += ', '.join(tag_set) + '`'
+        await ctx.channel.send(message)
+        
         
     @commands.command(aliases=['mytags', 'taglist'])
     async def checkTags(self, ctx):
-        user, data = await processUser(ctx, guid=ctx.guild.id, uid=ctx.author.id)
-        if user == None or data == None:
-            #there was an issue, break
+        tags = Database.getTags(user_id = ctx.author.id, guild_id = ctx.guild.id)
+        tag_set = []
+        if not tags:
+            await ctx.channel.send("You don't have any tags yet.")
             return
-
-        uid = str(ctx.author.id)
-        guid = str(ctx.guild.id)
-        response = "Your tag list is: " + ", ".join(data[guid]['users'][uid]['tags'])
-        await ctx.channel.send(response)
+        for tag in tags:
+            tag_set.append(tag[3])
+        message = "Your tags are: `"
+        message += ', '.join(tag_set) + '`'
+        await ctx.channel.send(message)
         
     @commands.command()
     async def hideTags(self, ctx, state):

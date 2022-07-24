@@ -12,6 +12,7 @@ import discord
 import imagehash
 import requests
 from discord.ext import commands
+import discord
 from dotenv import load_dotenv
 from PIL import Image
 from scipy.spatial import distance
@@ -28,6 +29,7 @@ from Cogs.UserManagement import UserManagement
 from Cogs.Status import Status
 from Entities import Post
 from Services import TwitterService
+from sql import Database
 
 load_dotenv()
 DEBUG = False  # set to false for live versions
@@ -57,6 +59,7 @@ intents = discord.Intents.default()
 intents.members = True
 intents.messages = True
 intents.guild_messages = True
+intents.guilds = True
 intents.dm_messages = True
 bot = commands.Bot(command_prefix='+',
                    description=description, intents=intents, case_insensitive=True)
@@ -81,6 +84,7 @@ manager = bot.get_cog('Management')
 @bot.event
 async def on_guild_join(guild):
 	print("Joined guild", guild)
+	Database.addGuild(guild)
 	await manager.updateGuildCommand(guild)
 
 
@@ -89,14 +93,20 @@ async def on_ready():
 	activity = discord.Game(
 		name="getting ready",
 	)
-	
+	Database.init()
+
 	await bot.change_presence(activity=activity)
- 
+
 	initFiles()
 	if not hasattr(bot, 'appinfo'):
 		bot.appinfo = await bot.application_info()
-	await manager.updateAllGuilds()	
+	await manager.updateAllGuilds()
 
+	guild: discord.Guild
+	async for guild in bot.fetch_guilds():
+		await Database.addGuild(guild)
+
+	Database.save()
 	print('Running')
 
 
@@ -108,6 +118,7 @@ def initFiles():
 	if not os.path.exists(guildsFile):
 		with open(guildsFile, 'a') as file:
 			file.write("{\n}")
+
 
 @bot.event
 async def on_message(message):

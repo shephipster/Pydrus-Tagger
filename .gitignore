@@ -19,3 +19,10 @@ backups/bfa65e6ec395aa2b39a4f083003b0c95db3cea0c3530fe44db11317687c893eb.png
 backups/users.json
 backups/imageLog.json
 backups/Pydrus-Tagger.rar
+sql/sqldiff.exe
+sql/sqlite3_analyzer.exe
+sql/sqlite3.dll
+sql/sqlite3.def
+sql/sqlite3.exe
+sql/__pycache__/*
+sql/models/__pycache__/*

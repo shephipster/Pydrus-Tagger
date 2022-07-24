@@ -201,7 +201,6 @@ class Management(commands.Cog):
         data = ctx.guild
         await self.updateGuildCommand(data)
 
-
     async def updateAllGuilds(self):
         for guild in self.bot.guilds:
             await self.updateGuildCommand(guild)
