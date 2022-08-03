@@ -28,6 +28,15 @@ class Users(Entity):
     def convertFromRow(self, values: list):
         return super().convertFromRow(values)
     
+    def setValue(self, pkey, col, value):
+        query = \
+        """
+        UPDATE Users SET
+        twitter = ?
+        where user_id = ?
+        """
+        params = (pkey, )
+    
     def addRow(self, **kwargs):
         
         connection = sql.Connection.connection.cursor()
@@ -53,7 +62,7 @@ class Users(Entity):
                 (datetime.now() - timedelta(hours=1)),
                 True,
                 30,
-                True
+                True,
             )
             
         connection.execute(query, params)
@@ -78,6 +87,12 @@ class Users(Entity):
         sql.Connection.connection.commit()
         connection.close()
         return fetched_data
+    
+    def search(self, **kwargs):
+        pass
+
+    def set(self, pkey, **kwargs):
+        pass
 
         
         

@@ -93,9 +93,7 @@ class User_Tag_Mappings(Entity):
             fetched_data = connection.execute(query, params).fetchall()
             return fetched_data
         except:
-            return 
-
-                
+            return                 
     
     def getByPKey(self, pkey, **kwargs):
         try:
@@ -110,3 +108,8 @@ class User_Tag_Mappings(Entity):
         except:
             return None
         
+    def search(self, **kwargs):
+        pass
+
+    def set(self, pkey, **kwargs):
+        pass

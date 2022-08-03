@@ -66,3 +66,9 @@ class Guilds(Entity):
         query = f'SELECT * from Guilds where guild_id = {pkey}'
         fetched_data = connection.execute(query).fetchall()
         return fetched_data
+    
+    def search(self, **kwargs):
+        pass
+
+    def set(self, pkey, **kwargs):
+        pass

@@ -20,3 +20,11 @@ class Entity(ABC):
     @abstractmethod
     def getByPKey(self, pkey):
         pass
+
+    @abstractmethod
+    def search(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def set(self, pkey, **kwargs):
+        pass

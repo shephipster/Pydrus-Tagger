@@ -28,7 +28,7 @@ from Cogs.TagManager import TagManager
 from Cogs.UserManagement import UserManagement
 from Cogs.Status import Status
 from Entities import Post
-from Services import TwitterService
+from Services import PybooruEmbedder, TwitterService
 from sql import Database
 
 load_dotenv()
@@ -273,6 +273,21 @@ async def on_message_edit(before, after):
 			await after.channel.send(embed=embed_obj)
 			await after.channel.send(media_urls[max_bitrate_index])
 
+	elif after.content.startswith(EMBED_FIX_PREFIX + ':'):
+		raw_content, meta_data = PybooruEmbedder.getFromUrl(before.content)
+		bot_avatar = bot.user.avatar_url
+		bot_image = bot_avatar.BASE + bot_avatar._url
+		body = meta_data['title']
+		embed_obj = discord.Embed(
+				colour=discord.Colour(0x5f4396),
+				description=body,
+				type="rich",
+				url=before.content,
+			)
+		embed_obj.set_author(name="Kira Bot", icon_url=bot_image)
+		embed_url = before.content + "&is_embed=True"
+		embed_obj.set_image(url=embed_url)
+		await after.channel.send(embed=embed_obj)
 
 @bot.event
 async def on_command_error(ctx, error):

@@ -37,3 +37,9 @@ class User_Guild_Mappings(Entity):
     
     def getByPKey(self, pkey):
         return super().getByPKey(pkey)
+    
+    def search(self, **kwargs):
+        pass
+
+    def set(self, pkey, **kwargs):
+        pass
