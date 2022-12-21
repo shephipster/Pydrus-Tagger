@@ -305,11 +305,21 @@ def associate_url(url_to_add:str="", urls_to_add:list=[], url_to_delete:str="", 
 ###########################    LEGACY CODE: Only here so older code doesn't break on an update      ##########################################
 def getAllFileIds():
     """ Returns a sorted list of all the file ids the client has"""
-    url = HYDRUS_URL + f"get_files/search_files?"
+    url = HYDRUS_URL + f"get_files/search_files?tags=%5B%22system%3Aarchive%22%5D&file_sort_asc=true"
     res = requests.get(url, headers=header)
     ids = res.json()['file_ids']
     return sorted(ids)
 
+def getAllFileIdsFiltered(exclusions=[], inclusions=[]):
+    url = HYDRUS_URL + f"get_files/search_files?tags=%5B%22system%3Aarchive%22" 
+    for exclusion in exclusions:
+        url += f"%2C%22-{exclusion}%22"
+    for inclusion in inclusions:
+        url += f"%2C%22{inclusion}%22"
+    url += "%5D&file_sort_asc=true"
+    res = requests.get(url, headers=header)
+    ids = res.json()['file_ids']
+    return sorted(ids)
 
 def getAllFileHashes():
     """ Returns a sorted list of all the file hashes the client has"""
@@ -323,6 +333,32 @@ def getAllMainFileData():
     """ Returns a set of all the main data for all files the client has. This is a good amount of information so be
     a bit sparing in using this. Main data includes {'file_id', 'hash', 'size', 'width', 'height', 'mime'} """
     ids = getAllFileIds()
+    pagedIds = list()
+    data = dict()
+    length = len(ids)
+    count = 0
+
+    for i in range(0, length, PAGE_SIZE):
+        pagedIds.append(ids[i:i+PAGE_SIZE])
+
+    for page in pagedIds:
+        meta = getMetaData(*page).json()['metadata']
+        for entry in meta:
+            data[count] = {
+                'file_id': entry['file_id'],
+                "hash": entry['hash'],
+                "size": entry['size'],
+                "width": entry['width'],
+                "height": entry['height'],
+                "mime": entry['mime']
+            }
+            count = count + 1
+    return data
+
+def getAllMainFileDataFiltered(inclusions=[], exclusions=[]):
+    """ Returns a set of all the main data for all files the client has. This is a good amount of information so be
+    a bit sparing in using this. Main data includes {'file_id', 'hash', 'size', 'width', 'height', 'mime'} """
+    ids = getAllFileIdsFiltered(inclusions=inclusions, exclusions=exclusions)
     pagedIds = list()
     data = dict()
     length = len(ids)
@@ -530,6 +566,19 @@ def addTags(id, *tags):
     res = requests.post(url, json=body, headers=header)
     return res
 
+
+def addTagByHash(hash, tag):
+    url = HYDRUS_URL + "add_tags/add_tags"
+    tagList = [tag]
+
+    body = {
+        "hash": hash,
+        "service_names_to_tags": {
+            "my tags": tagList
+        }
+    }
+    res = requests.post(url, json=body, headers=header)
+    return res
 
 def addTagByHash(hash, tag):
     url = HYDRUS_URL + "add_tags/add_tags"
