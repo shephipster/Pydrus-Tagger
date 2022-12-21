@@ -216,7 +216,7 @@ class FileFinder(Thread):
     def run(self):
         #for all files
         #Why in the world was I using the id and making more calls for the hash?
-        fileData = HydrusApi.getAllMainFileData()
+        fileData = HydrusApi.getAllMainFileDataFiltered(exclusions=['IQDB_PROCESSED'])
         for key in fileData.keys():
             self.numFiles += 1
             if not fio.hashInFile(fileData[key]['hash']):
@@ -224,6 +224,9 @@ class FileFinder(Thread):
                     self.newFiles.append(fileData[key]['hash'])
                 else:
                     fio.addHash(fileData[key]['hash'])
+            else:
+                #legacy handling, add the IQDB_PROCESSED tag to the LOCAL tags only, not PTR tags
+                HydrusApi.addTagByHash(fileData[key]['hash'], 'IQDB_PROCESSED')
         fio.save()
 
 
@@ -286,6 +289,7 @@ class Processor(Thread):
                 HydrusApi.uploadURL(str(url), title="PyQDB")
         for tag in tags:
             HydrusApi.addTagByHash(hash, tag)
+        HydrusApi.addTagByHash(hash, 'IQDB_PROCESSED')
 
 
 
