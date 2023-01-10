@@ -1,13 +1,11 @@
 import threading
 import tkinter as tk
 from tkinter import ttk
-from Hydrus.ProcessedFilesIO import ProcessedFilesIO
 import Hydrus.HydrusApi as HydrusApi
 import Services.IQDBService as IQDB
 import time
 from threading import Thread
 
-fio = ProcessedFilesIO("./tempFiles/processedIQDBHashes.txt")
 
 debug = False
 
@@ -197,7 +195,7 @@ class App(tk.Tk):
                 self.hashesToProcess = thread.newFiles
                 self.totalFiles = thread.numFiles
                 self.newFiles = len(thread.newFiles)
-                self.statusDisplay.config(text="Status: %d files found, %d new. Ready to process" % (self.totalFiles, self.newFiles))
+                self.statusDisplay.config(text="Status: %d new files found, %d can be processed. Ready to process" % (self.totalFiles, self.newFiles))
             self.state = 1
 
     def awaitEnd(self):
@@ -219,15 +217,8 @@ class FileFinder(Thread):
         fileData = HydrusApi.getAllMainFileDataFiltered(exclusions=['IQDB_PROCESSED'])
         for key in fileData.keys():
             self.numFiles += 1
-            if not fio.hashInFile(fileData[key]['hash']):
-                if isValidFile(fileData[key]):
-                    self.newFiles.append(fileData[key]['hash'])
-                else:
-                    fio.addHash(fileData[key]['hash'])
-            else:
-                #legacy handling, add the IQDB_PROCESSED tag to the LOCAL tags only, not PTR tags
-                HydrusApi.addTagByHash(fileData[key]['hash'], 'IQDB_PROCESSED')
-        fio.save()
+            if isValidFile(fileData[key]):
+                self.newFiles.append(fileData[key]['hash'])
 
 
 #Handles the actual processing of the files and tagging them
@@ -257,20 +248,25 @@ class Processor(Thread):
                     image = HydrusApi.getImageByHash(fileHash)
                     data = IQDB.getInfoFileSync(image)
                     if not data == None:  
-                        self.processFile(data, fileHash)
+                        self.processFile(data, fileHash)  
+                    else:
+                        HydrusApi.addTagByHash(fileHash, 'IQDB_NO_RESULTS_FOUND')
                 else:
                     print(f"Invalid file, hash {fileHash}")
+                    HydrusApi.addTagByHash(fileHash, 'IQDB_INVALID_FILE')
             except Exception as e:
                  print("Exception:", e)
                  print("Failed hash:", fileHash)
                  print(f'{fileHash}', file = open('tempFiles/failedHashes.txt', 'a', encoding='utf-8'))
+                 HydrusApi.addTagByHash(fileHash, 'IQDB_FAILED')                 
+                 
             finally:    
-                fio.addHash(fileHash)
+                HydrusApi.addHashesToPage('IQDB Processed', fileHash)
+                HydrusApi.addTagByHash(fileHash, 'IQDB_PROCESSED')
                 self.filesToHandle.remove(fileHash)            
                 self.count += 1
                 self.handledFiles.append(fileHash)
                 self.mostRecent = fileHash
-                fio.save()
                 #help prevent reaching api limits
                 time.sleep(5) 
                 if self.count % 50 == 0:
@@ -287,9 +283,12 @@ class Processor(Thread):
             ignored_urls = ['zerochan','e-shuushuu', 'anime-pictures']
             if not any(iurl in str(url) for iurl in ignored_urls):
                 HydrusApi.uploadURL(str(url), title="PyQDB")
+        if not tags:
+            #No tags found, denote this as they may want to manually tag these
+            HydrusApi.addTagByHash(hash, 'IQDB_NO_TAGS_FOUND')
         for tag in tags:
             HydrusApi.addTagByHash(hash, tag)
-        HydrusApi.addTagByHash(hash, 'IQDB_PROCESSED')
+
 
 
 
