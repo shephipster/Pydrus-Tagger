@@ -9,6 +9,7 @@ from threading import Thread
 
 debug = False
 health_check = ''
+MAX_FILES = 1000
 
 def health_checker():
     #Checks to see if everything works before even bothering. Will inform the user of any issues
@@ -240,7 +241,7 @@ class FileFinder(Thread):
     def run(self):
         #for all files
         #Why in the world was I using the id and making more calls for the hash?
-        fileData = HydrusApi.getAllMainFileDataFiltered(exclusions=['IQDB_PROCESSED'])
+        fileData = HydrusApi.getAllMainFileDataFiltered(exclusions=['IQDB_PROCESSED'], limit = MAX_FILES)
         for key in fileData.keys():
             self.numFiles += 1
             if isValidFile(fileData[key]):
