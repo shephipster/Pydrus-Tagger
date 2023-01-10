@@ -34,6 +34,59 @@ def get_api_version():
     return api_version, hydrus_version
 # GET /request_new_permissions
 
+def test_connection():
+    url = HYDRUS_URL + "api_version"
+    try:
+        res = requests.get(url, headers=header)
+        return res.status_code
+    except:
+        return 500
+    
+def test_fetch():
+    try:
+        url = HYDRUS_URL + f"get_files/search_files?tags=[\"system:limit=1\"]"
+        res = requests.get(url, headers=header)
+        return res.status_code
+    except:
+        return 500
+
+def test_tags():
+    try:
+        url = HYDRUS_URL + f"get_files/search_files?tags=[\"system:limit=1\"]"
+        res = requests.get(url, headers=header)
+        json = res.json()
+        id = json['file_ids'][0]
+        hash = getMeta(id)['hash']
+        
+        
+        url = HYDRUS_URL + "add_tags/add_tags"
+        tagList = ['IQDB_TEST_TAG']
+
+        body = {
+            "hash": hash,
+            "service_names_to_tags": {
+                "my tags": tagList
+            }
+        }
+        res = requests.post(url, json=body, headers=header)
+        if res.status_code != 200:
+            return res.status_code
+        
+        url = HYDRUS_URL + "add_tags/add_tags"
+        
+        body = {
+            "hash": hash,
+            "service_names_to_actions_to_tags": {
+                "my tags": {
+                    "1": ["IQDB_TEST_TAG"]
+                }
+            }
+        }
+        res = requests.post(url, json=body, headers=header)
+        return res.status_code
+    except:
+        return 500
+    
 
 def request_new_permissions(name: str, basic_permissions: list):
     """ Takes a name and a list of permissions"""
@@ -561,6 +614,38 @@ def addTags(id, *tags):
         "hash": hash,
         "service_names_to_tags": {
             "my tags": tagList
+        }
+    }
+
+    res = requests.post(url, json=body, headers=header)
+    return res
+
+def deleteTags(id, *tags):
+    hash = getMeta(id)['hash']
+    url = HYDRUS_URL + "add_tags/add_tags"
+
+    """ No idea why we couldn't just use *tags, or why taglist is going 2D
+        but if we want to use it in the body this needs to be done
+    """
+    tagList = []
+    for t in tags:
+        tagList.append(t)
+    tagList = tagList[0]
+    """ The permitted 'actions' are:
+
+    0 - Add to a local tag service.
+    1 - Delete from a local tag service.
+    2 - Pend to a tag repository.
+    3 - Rescind a pend from a tag repository.
+    4 - Petition from a tag repository. (This is special)
+    5 - Rescind a petition from a tag repository."""
+
+    body = {
+        "hash": hash,
+        "service_keys_to_actions_to_tags": {
+            HYDRUS_KEY: {
+                "1": tagList
+            }
         }
     }
 
