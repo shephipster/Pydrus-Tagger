@@ -8,6 +8,24 @@ from threading import Thread
 
 
 debug = False
+health_check = ''
+
+def health_checker():
+    #Checks to see if everything works before even bothering. Will inform the user of any issues
+    #check can connect to Hydrus
+    status = HydrusApi.test_connection()
+    if status != 200:
+        return "Failed to connect to the Hydrus Client"
+    #check can get tags
+    status = HydrusApi.test_fetch()
+    if status != 200:
+        return "System could not fetch files from the Hydrus Client"
+    #check can add tags
+    #check can remove tags (not actually really needed, just want to remove the tag added previously)
+    status = HydrusApi.test_tags()
+    if status != 200:
+        return "Could not add or remove tags on the Hydrus client"
+    return "Success"
 
 #GUI
 class App(tk.Tk): 
@@ -85,17 +103,25 @@ class App(tk.Tk):
         self.displayFrame.rowconfigure(2, weight=1)
 
         self.statusDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
-        self.statusDisplay.config(text="Status: Needs Initialization. Press \"Initialize\"")
-        self.statusDisplay.grid(row=0)
+        
+        #Health Checker
+        health_check = health_checker()
+        if health_check == 'Success':        
+            self.statusDisplay.config(text="Status: Needs Initialization. Press \"Initialize\"")
+            self.statusDisplay.grid(row=0)
 
-        self.stageDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
-        self.stageDisplay.config(text=f"Files Processed: 0")
-        self.stageDisplay.grid(row=1)
+            self.stageDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
+            self.stageDisplay.config(text=f"Files Processed: 0")
+            self.stageDisplay.grid(row=1)
 
-        self.timeDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
-        self.timeDisplay.config(text="Elapsed Time: 00:00:00")
-        self.timeDisplay.grid(row=2)
+            self.timeDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
+            self.timeDisplay.config(text="Elapsed Time: 00:00:00")
+            self.timeDisplay.grid(row=2)
 
+        else:
+            self.statusDisplay.config(text=health_check)
+            self.statusDisplay.grid(row=0)        
+        
         self.displayFrame.grid(column=0, row=0, sticky=tk.NSEW, padx=0, pady=0)
 
     def initialize(self):
