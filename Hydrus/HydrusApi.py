@@ -310,12 +310,13 @@ def getAllFileIds():
     ids = res.json()['file_ids']
     return sorted(ids)
 
-def getAllFileIdsFiltered(exclusions=[], inclusions=[]):
+def getAllFileIdsFiltered(exclusions=[], inclusions=[], limit=1000):
     url = HYDRUS_URL + f"get_files/search_files?tags=%5B%22system%3Aarchive%22" 
     for exclusion in exclusions:
         url += f"%2C%22-{exclusion}%22"
     for inclusion in inclusions:
         url += f"%2C%22{inclusion}%22"
+    url += f"%2C%22system%3Alimit%3D{limit}%22"
     url += "%5D&file_sort_asc=true"
     res = requests.get(url, headers=header)
     ids = res.json()['file_ids']
@@ -355,10 +356,10 @@ def getAllMainFileData():
             count = count + 1
     return data
 
-def getAllMainFileDataFiltered(inclusions=[], exclusions=[]):
+def getAllMainFileDataFiltered(inclusions=[], exclusions=[], limit=1000):
     """ Returns a set of all the main data for all files the client has. This is a good amount of information so be
     a bit sparing in using this. Main data includes {'file_id', 'hash', 'size', 'width', 'height', 'mime'} """
-    ids = getAllFileIdsFiltered(inclusions=inclusions, exclusions=exclusions)
+    ids = getAllFileIdsFiltered(inclusions=inclusions, exclusions=exclusions, limit=limit)
     pagedIds = list()
     data = dict()
     length = len(ids)
