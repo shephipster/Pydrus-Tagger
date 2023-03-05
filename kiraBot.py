@@ -32,7 +32,7 @@ from Services import PybooruEmbedder, TwitterService
 from sql import Database
 
 load_dotenv()
-DEBUG = False  # set to false for live versions
+DEBUG = True  # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')
 DISCORD_API_KEY = os.getenv('DISCORD_API_KEY')
