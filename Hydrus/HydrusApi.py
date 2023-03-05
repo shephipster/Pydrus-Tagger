@@ -34,6 +34,59 @@ def get_api_version():
     return api_version, hydrus_version
 # GET /request_new_permissions
 
+def test_connection():
+    url = HYDRUS_URL + "api_version"
+    try:
+        res = requests.get(url, headers=header)
+        return res.status_code
+    except:
+        return 500
+    
+def test_fetch():
+    try:
+        url = HYDRUS_URL + f"get_files/search_files?tags=[\"system:limit=1\"]"
+        res = requests.get(url, headers=header)
+        return res.status_code
+    except:
+        return 500
+
+def test_tags():
+    try:
+        url = HYDRUS_URL + f"get_files/search_files?tags=[\"system:limit=1\"]"
+        res = requests.get(url, headers=header)
+        json = res.json()
+        id = json['file_ids'][0]
+        hash = getMeta(id)['hash']
+        
+        
+        url = HYDRUS_URL + "add_tags/add_tags"
+        tagList = ['IQDB_TEST_TAG']
+
+        body = {
+            "hash": hash,
+            "service_names_to_tags": {
+                "my tags": tagList
+            }
+        }
+        res = requests.post(url, json=body, headers=header)
+        if res.status_code != 200:
+            return res.status_code
+        
+        url = HYDRUS_URL + "add_tags/add_tags"
+        
+        body = {
+            "hash": hash,
+            "service_names_to_actions_to_tags": {
+                "my tags": {
+                    "1": ["IQDB_TEST_TAG"]
+                }
+            }
+        }
+        res = requests.post(url, json=body, headers=header)
+        return res.status_code
+    except:
+        return 500
+    
 
 def request_new_permissions(name: str, basic_permissions: list):
     """ Takes a name and a list of permissions"""
@@ -305,11 +358,22 @@ def associate_url(url_to_add:str="", urls_to_add:list=[], url_to_delete:str="", 
 ###########################    LEGACY CODE: Only here so older code doesn't break on an update      ##########################################
 def getAllFileIds():
     """ Returns a sorted list of all the file ids the client has"""
-    url = HYDRUS_URL + f"get_files/search_files?"
+    url = HYDRUS_URL + f"get_files/search_files?tags=%5B%22system%3Aarchive%22%5D&file_sort_asc=true"
     res = requests.get(url, headers=header)
     ids = res.json()['file_ids']
     return sorted(ids)
 
+def getAllFileIdsFiltered(exclusions=[], inclusions=[], limit=1000):
+    url = HYDRUS_URL + f"get_files/search_files?tags=%5B%22system%3Aarchive%22" 
+    for exclusion in exclusions:
+        url += f"%2C%22-{exclusion}%22"
+    for inclusion in inclusions:
+        url += f"%2C%22{inclusion}%22"
+    url += f"%2C%22system%3Alimit%3D{limit}%22"
+    url += "%5D&file_sort_asc=true"
+    res = requests.get(url, headers=header)
+    ids = res.json()['file_ids']
+    return sorted(ids)
 
 def getAllFileHashes():
     """ Returns a sorted list of all the file hashes the client has"""
@@ -323,6 +387,32 @@ def getAllMainFileData():
     """ Returns a set of all the main data for all files the client has. This is a good amount of information so be
     a bit sparing in using this. Main data includes {'file_id', 'hash', 'size', 'width', 'height', 'mime'} """
     ids = getAllFileIds()
+    pagedIds = list()
+    data = dict()
+    length = len(ids)
+    count = 0
+
+    for i in range(0, length, PAGE_SIZE):
+        pagedIds.append(ids[i:i+PAGE_SIZE])
+
+    for page in pagedIds:
+        meta = getMetaData(*page).json()['metadata']
+        for entry in meta:
+            data[count] = {
+                'file_id': entry['file_id'],
+                "hash": entry['hash'],
+                "size": entry['size'],
+                "width": entry['width'],
+                "height": entry['height'],
+                "mime": entry['mime']
+            }
+            count = count + 1
+    return data
+
+def getAllMainFileDataFiltered(inclusions=[], exclusions=[], limit=1000):
+    """ Returns a set of all the main data for all files the client has. This is a good amount of information so be
+    a bit sparing in using this. Main data includes {'file_id', 'hash', 'size', 'width', 'height', 'mime'} """
+    ids = getAllFileIdsFiltered(inclusions=inclusions, exclusions=exclusions, limit=limit)
     pagedIds = list()
     data = dict()
     length = len(ids)
@@ -530,6 +620,51 @@ def addTags(id, *tags):
     res = requests.post(url, json=body, headers=header)
     return res
 
+def deleteTags(id, *tags):
+    hash = getMeta(id)['hash']
+    url = HYDRUS_URL + "add_tags/add_tags"
+
+    """ No idea why we couldn't just use *tags, or why taglist is going 2D
+        but if we want to use it in the body this needs to be done
+    """
+    tagList = []
+    for t in tags:
+        tagList.append(t)
+    tagList = tagList[0]
+    """ The permitted 'actions' are:
+
+    0 - Add to a local tag service.
+    1 - Delete from a local tag service.
+    2 - Pend to a tag repository.
+    3 - Rescind a pend from a tag repository.
+    4 - Petition from a tag repository. (This is special)
+    5 - Rescind a petition from a tag repository."""
+
+    body = {
+        "hash": hash,
+        "service_keys_to_actions_to_tags": {
+            HYDRUS_KEY: {
+                "1": tagList
+            }
+        }
+    }
+
+    res = requests.post(url, json=body, headers=header)
+    return res
+
+
+def addTagByHash(hash, tag):
+    url = HYDRUS_URL + "add_tags/add_tags"
+    tagList = [tag]
+
+    body = {
+        "hash": hash,
+        "service_names_to_tags": {
+            "my tags": tagList
+        }
+    }
+    res = requests.post(url, json=body, headers=header)
+    return res
 
 def addTagByHash(hash, tag):
     url = HYDRUS_URL + "add_tags/add_tags"

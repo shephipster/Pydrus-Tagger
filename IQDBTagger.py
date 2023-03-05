@@ -1,15 +1,32 @@
 import threading
 import tkinter as tk
 from tkinter import ttk
-from Hydrus.ProcessedFilesIO import ProcessedFilesIO
 import Hydrus.HydrusApi as HydrusApi
 import Services.IQDBService as IQDB
 import time
 from threading import Thread
 
-fio = ProcessedFilesIO("./tempFiles/processedIQDBHashes.txt")
 
 debug = False
+health_check = ''
+MAX_FILES = 1000
+
+def health_checker():
+    #Checks to see if everything works before even bothering. Will inform the user of any issues
+    #check can connect to Hydrus
+    status = HydrusApi.test_connection()
+    if status != 200:
+        return "Failed to connect to the Hydrus Client"
+    #check can get tags
+    status = HydrusApi.test_fetch()
+    if status != 200:
+        return "System could not fetch files from the Hydrus Client"
+    #check can add tags
+    #check can remove tags (not actually really needed, just want to remove the tag added previously)
+    status = HydrusApi.test_tags()
+    if status != 200:
+        return "Could not add or remove tags on the Hydrus client"
+    return "Success"
 
 #GUI
 class App(tk.Tk): 
@@ -87,17 +104,25 @@ class App(tk.Tk):
         self.displayFrame.rowconfigure(2, weight=1)
 
         self.statusDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
-        self.statusDisplay.config(text="Status: Needs Initialization. Press \"Initialize\"")
-        self.statusDisplay.grid(row=0)
+        
+        #Health Checker
+        health_check = health_checker()
+        if health_check == 'Success':        
+            self.statusDisplay.config(text="Status: Needs Initialization. Press \"Initialize\"")
+            self.statusDisplay.grid(row=0)
 
-        self.stageDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
-        self.stageDisplay.config(text=f"Files Processed: 0")
-        self.stageDisplay.grid(row=1)
+            self.stageDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
+            self.stageDisplay.config(text=f"Files Processed: 0")
+            self.stageDisplay.grid(row=1)
 
-        self.timeDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
-        self.timeDisplay.config(text="Elapsed Time: 00:00:00")
-        self.timeDisplay.grid(row=2)
+            self.timeDisplay = tk.Label(self.displayFrame, height=1, width=50, textvariable="")
+            self.timeDisplay.config(text="Elapsed Time: 00:00:00")
+            self.timeDisplay.grid(row=2)
 
+        else:
+            self.statusDisplay.config(text=health_check)
+            self.statusDisplay.grid(row=0)        
+        
         self.displayFrame.grid(column=0, row=0, sticky=tk.NSEW, padx=0, pady=0)
 
     def initialize(self):
@@ -197,7 +222,7 @@ class App(tk.Tk):
                 self.hashesToProcess = thread.newFiles
                 self.totalFiles = thread.numFiles
                 self.newFiles = len(thread.newFiles)
-                self.statusDisplay.config(text="Status: %d files found, %d new. Ready to process" % (self.totalFiles, self.newFiles))
+                self.statusDisplay.config(text="Status: %d new files found, %d can be processed. Ready to process" % (self.totalFiles, self.newFiles))
             self.state = 1
 
     def awaitEnd(self):
@@ -216,15 +241,11 @@ class FileFinder(Thread):
     def run(self):
         #for all files
         #Why in the world was I using the id and making more calls for the hash?
-        fileData = HydrusApi.getAllMainFileData()
+        fileData = HydrusApi.getAllMainFileDataFiltered(exclusions=['IQDB_PROCESSED'], limit = MAX_FILES)
         for key in fileData.keys():
             self.numFiles += 1
-            if not fio.hashInFile(fileData[key]['hash']):
-                if isValidFile(fileData[key]):
-                    self.newFiles.append(fileData[key]['hash'])
-                else:
-                    fio.addHash(fileData[key]['hash'])
-        fio.save()
+            if isValidFile(fileData[key]):
+                self.newFiles.append(fileData[key]['hash'])
 
 
 #Handles the actual processing of the files and tagging them
@@ -252,27 +273,31 @@ class Processor(Thread):
             try:
                 if isValidFile(HydrusApi.getMetaFromHash(fileHash)):
                     image = HydrusApi.getImageByHash(fileHash)
-                    data = IQDB.getInfo(image)
+                    data = IQDB.getInfoFileSync(image)
                     if not data == None:  
-                        self.processFile(data, fileHash)
+                        self.processFile(data, fileHash)  
+                    else:
+                        HydrusApi.addTagByHash(fileHash, 'IQDB_NO_RESULTS_FOUND')
                 else:
                     print(f"Invalid file, hash {fileHash}")
+                    HydrusApi.addTagByHash(fileHash, 'IQDB_INVALID_FILE')
             except Exception as e:
                  print("Exception:", e)
                  print("Failed hash:", fileHash)
-                 print(f'{fileHash}\n', file = open('tempFiles/failedHashes.txt', 'a', encoding='utf-8'))
+                 print(f'{fileHash}', file = open('tempFiles/failedHashes.txt', 'a', encoding='utf-8'))
+                 HydrusApi.addTagByHash(fileHash, 'IQDB_FAILED')                 
+                 
             finally:    
-                fio.addHash(fileHash)
+                HydrusApi.addHashesToPage('IQDB Processed', fileHash)
+                HydrusApi.addTagByHash(fileHash, 'IQDB_PROCESSED')
                 self.filesToHandle.remove(fileHash)            
                 self.count += 1
                 self.handledFiles.append(fileHash)
                 self.mostRecent = fileHash
-                fio.save()
                 #help prevent reaching api limits
                 time.sleep(5) 
                 if self.count % 50 == 0:
                     time.sleep(25)
-        self.join()
 
     def processFile(self, data, hash):
         tags = data['tags']
@@ -281,9 +306,16 @@ class Processor(Thread):
             if not url.startswith("http://") and not url.startswith("https://"):
                 url = "http://" + url
             HydrusApi.addKnownURLToFileByHash(hash, url)
-            HydrusApi.uploadURL(str(url), title="PyQDB")
+            #Omit urls of anime-pictures, e-shuushuu ,  and zerochan . They pretty much always fails and slow down Hydrus processing
+            ignored_urls = ['zerochan','e-shuushuu', 'anime-pictures']
+            if not any(iurl in str(url) for iurl in ignored_urls):
+                HydrusApi.uploadURL(str(url), title="PyQDB")
+        if not tags:
+            #No tags found, denote this as they may want to manually tag these
+            HydrusApi.addTagByHash(hash, 'IQDB_NO_TAGS_FOUND')
         for tag in tags:
             HydrusApi.addTagByHash(hash, tag)
+
 
 
 
