@@ -12,3 +12,9 @@ tester.py
 .env
 guilds.json
 .vscode/launch.json
+*.pyc
+*.exe
+sql/sqlite3.def
+backups/Pydrus-Tagger.rar
+sql/sqlite3.dll
+backups/*
