@@ -53,9 +53,9 @@ def refineText(r):
     return refinedText
 
 def getTags(refined: str):
-    dataRegex = "title=\"Rating: \w Score: \d Tags:[\sa-zA-Z0-9_\-\(\)]+\""
-    ratingRegex = "Rating: \w"
-    tagsRegex = "Tags: [\w\d _\(\)\:\\\/\-]*"
+    dataRegex = r"title=\"Rating: \w Score: \d Tags:[\sa-zA-Z0-9_\-\(\)]+\""
+    ratingRegex = r"Rating: \w"
+    tagsRegex = r"Tags: [\w\d _\(\)\:\\\/\-]*"
     
     tagSet = set()
 
@@ -83,7 +83,7 @@ def getTags(refined: str):
 def getUrls(te:str):
     #Split te into entries
     urls = set()
-    entries = re.findall('match</th>.*similarity', te)
+    entries = re.findall(r'match</th>.*similarity', te)
     for entry in entries:
         parsedEntry = parseEntry(entry)
         if parsedEntry['likeness'] > LIKENESS_LIMIT:
@@ -92,12 +92,12 @@ def getUrls(te:str):
     return urls
 
 def parseEntry(entry:str):
-    urls = re.findall('href=\"[htps:]*//[\w\.-]+[/\w\.\?\=\&]+\"', entry)
+    urls = re.findall(r'href=\"[htps:]*//[\w\.-]+[/\w\.\?\=\&]+\"', entry)
     for i in range(len(urls)):
         urls[i] = urls[i][6:-1]
         if urls[i][0:2] == "//":
             urls[i] = urls[i][2:]
-    likenessStr = re.findall('\d{1,2}%', entry)[0]
+    likenessStr = re.findall(r'\d{1,2}%', entry)[0]
     likeness = int(likenessStr[:-1])
     entry = {
         'urls': urls,
@@ -124,12 +124,12 @@ async def getInfoDiscordFile(fp:io.BufferedIOBase):
     for url in urls:
         if url.find('danbooru') != -1:
             #get the id from the url and then pass it to DanbooruService
-            id = re.findall('\d+', url)[0]
+            id = re.findall(r'\d+', url)[0]
             danTags = await DanbooruService.getTagsFromId(id)
             for tag in danTags:
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
-            md5 = re.findall('md5=[\d|\w]+', url)
+            md5 = re.findall(r'md5=[\d|\w]+', url)
             if md5 != None:
                 for m in md5:
                     gelTags = await GelbooruService.getTagsFromMD5(m[4:])
@@ -159,12 +159,12 @@ async def getInfoFile(file):
     for url in urls:
         if url.find('danbooru') != -1:
             #get the id from the url and then pass it to DanbooruService
-            id = re.findall('\d+', url)[0]
+            id = re.findall(r'\d+', url)[0]
             danTags = await DanbooruService.getTagsFromId(id)
             for tag in danTags:
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
-            md5 = re.findall('md5=[\d|\w]+', url)[0]
+            md5 = re.findall(r'md5=[\d|\w]+', url)[0]
             md5 = md5[4:]
             gelTags = await GelbooruService.getTagsFromMD5(md5)
             for tag in gelTags:
@@ -193,13 +193,15 @@ def getInfoFileSync(file):
     for url in urls:
         if url.find('danbooru') != -1:
             #get the id from the url and then pass it to DanbooruService
-            id = re.findall('\d+', url)[0]
+            id = re.findall(r'\d+', url)[0]
             danTags = DanbooruService.getTagsFromIdSync(id)
             for tag in danTags:
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
-            md5 = re.findall('md5=[\d|\w]+', url)[0]
-            md5 = md5[4:]
+            md5 = re.findall(r'md5=[\d|\w]+', url)
+            if not md5: # this occurs if the post was deleted for things like duplicate results
+                continue
+            md5 = md5[0][4:]
             gelTags = GelbooruService.getTagsFromMD5Sync(md5)
             for tag in gelTags:
                 tags.add(tag)
@@ -238,12 +240,12 @@ async def getInfoUrl(url):
     for url in urls:
         if url.find('danbooru') != -1:
             #get the id from the url and then pass it to DanbooruService
-            id = re.findall('\d+', url)[0]
+            id = re.findall(r'\d+', url)[0]
             danTags = await DanbooruService.getTagsFromId(id)
             for tag in danTags:
                 tags.add(tag)
         elif url.find('gelbooru') != -1:
-            md5 = re.search('md5=([\d|\w]+)', url)
+            md5 = re.search(r'md5=([\d|\w]+)', url)
             gelTags = await GelbooruService.getTagsFromMD5(md5.group(1)) if md5 != None else []
             for tag in gelTags:
                 tags.add(tag)
@@ -261,7 +263,7 @@ def getSauceNaoLink(res):
         text = res.text
     elif isinstance(res, str):
         text = res
-    regex = "saucenao.com/search.php\?db=999&dbmaski=32768&url=(https://iqdb.org/thu/[\w\d]+.\w{3})"
+    regex = r"saucenao.com/search.php\?db=999&dbmaski=32768&url=(https://iqdb.org/thu/[\w\d]+.\w{3})"
     try:
         url = re.findall(regex, text)[0]
     except IndexError:

@@ -12,7 +12,6 @@ import discord
 import imagehash
 import requests
 from discord.ext import commands
-from dotenv import load_dotenv
 from PIL import Image
 from scipy.spatial import distance
 
@@ -29,7 +28,6 @@ from Cogs.Status import Status
 from Entities import Post
 from Services import TwitterService
 
-load_dotenv()
 DEBUG = True  # set to false for live versions
 #Use this set for the normal version
 TOKEN = os.getenv('DISCORD_TOKEN')

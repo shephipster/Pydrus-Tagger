@@ -2,9 +2,7 @@ import aiohttp
 import requests
 import random
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
 
 GELBOORU_URL = "http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&id={0}{1}"
 GELBOORU_MD5_URL = "https://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&tags=md5%3a{0}{1}"

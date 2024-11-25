@@ -1,8 +1,6 @@
 import requests
 # import os
-from dotenv import load_dotenv
 
-load_dotenv()
 
 #so while there is a mildly extensive API for e621, turns out you can literally just put .json
 #at the end of the id and call it a day

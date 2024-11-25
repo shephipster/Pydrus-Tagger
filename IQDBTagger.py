@@ -9,7 +9,7 @@ from threading import Thread
 
 debug = False
 health_check = ''
-MAX_FILES = 1000
+MAX_FILES = 10000
 
 def health_checker():
     #Checks to see if everything works before even bothering. Will inform the user of any issues

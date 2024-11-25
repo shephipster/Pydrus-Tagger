@@ -1,11 +1,9 @@
 import requests
 import os
 
-from dotenv import load_dotenv
 from Utilities.Tagger import Tagger
 
 
-load_dotenv()
 
 SAUCE_NAO_BASE = "https://saucenao.com/search.php"
 API_KEY = os.getenv('SAUCE_NAO_API_KEY')
@@ -59,7 +57,7 @@ def getAllTagsFromUrl(url):
 
         dTags = Tagger.getDanbooruTags(refs["danbooru"])
         gTags = Tagger.getGelbooruTags(refs["gelbooru"])
-        tTags = Tagger.getTwitterTags(refs["twitter"])
+        # tTags = Tagger.getTwitterTags(refs["twitter"])
         eTags = Tagger.getE621Tags(refs["e621"])
         yTags = Tagger.getYandereTags(refs["yandere"])
 
@@ -89,7 +87,7 @@ def getTagsFromLinks(links):
     tags = set()
     dTags = Tagger.getDanbooruTags(links["danbooru"])
     gTags = Tagger.getGelbooruTags(links["gelbooru"])
-    tTags = Tagger.getTwitterTags(links["twitter"])
+    # tTags = Tagger.getTwitterTags(links["twitter"])
     eTags = Tagger.getE621Tags(links["e621"])
     yTags = Tagger.getYandereTags(links["yandere"])
 

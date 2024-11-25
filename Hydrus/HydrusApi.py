@@ -2,8 +2,6 @@ import os
 import requests
 import io
 
-from dotenv import load_dotenv
-load_dotenv()
 
 #This is assuming that Hydrus is running on the same machine
 HYDRUS_URL = os.getenv("HYDRUS_URL")
@@ -586,6 +584,13 @@ def getUrls(id):
     known_urls = meta['known_urls']
     return known_urls
 
+def groupByUrl(url:str):
+    url = HYDRUS_URL + f"add_urls/get_url_files?url={url}"
+    res = requests.get(url, headers=header)
+    return res
+
+
+
 
 """ Tags the tags and adds them to the local tag service"""
 
@@ -666,14 +671,13 @@ def addTagByHash(hash, tag):
     res = requests.post(url, json=body, headers=header)
     return res
 
-def addTagByHash(hash, tag):
+def addTagsByHash(hash, *tags):
     url = HYDRUS_URL + "add_tags/add_tags"
-    tagList = [tag]
 
     body = {
         "hash": hash,
         "service_names_to_tags": {
-            "my tags": tagList
+            "my tags": list(*tags)
         }
     }
     res = requests.post(url, json=body, headers=header)
@@ -814,6 +818,18 @@ def getMetaFromHash(hash):
 
     return res.json()['metadata'][0]
 
+def getMetaFromHashes(*hashes):
+    encoded_hashes = '%22%2C%20%22'.join(hashes)
+    url = HYDRUS_URL + "get_files/file_metadata?hashes=%5B%22" + \
+        encoded_hashes + "%22%5D&detailed_url_information=true"
+    res = requests.get(url, headers=header)
+
+    if(res.headers['Content-Type'] == "text/html"):
+        if (res.headers['Content-Length'] == '44' or res.headers['Content-Length'] == '25'):
+            return None
+
+    return res.json()['metadata']
+
 def getAllFilesOfType(fileType:str):
     url = HYDRUS_URL + 'get_files/search_files?tags=%5B%22system%3Afiletype%20is%20'+ fileType +'%22%5D&return_hashes=true'
     res = requests.get(url, headers=header)
@@ -848,3 +864,71 @@ def getPageKey(pageTitle):
             return page['page_key']
 
     return None #if the page was neither created nor found
+
+def getHashesFromHydrus(*tags, or_groups:list=None) -> list:
+        url = HYDRUS_URL + "/get_files/search_files?tags="
+        url += tagsToHydrusString(*tags, or_groups=or_groups)
+        url += "&return_hashes=true"
+        res = requests.get(url, headers={
+            'Hydrus-Client-API-Access-Key': '01c67b71b49eee4e0e5f27972396f6a443a9292ca9ec80caa4c934ae81b773f2', # PRIVATE
+            'User-Agent': "Pydrus-Client/1.0.0"
+        })
+        ids = res.json()['hashes']
+        
+        #take the tags, and then do a search based on the tag
+
+        return ids  
+    
+def tagsToHydrusString(*tags, or_groups = None):
+    import urllib
+    updated_tags = []
+    for tag in tags:
+        if tag == "":
+            continue
+        if not tag.startswith('\"'):
+            tag = '\"' + tag + '\"'
+        if '_' in tag:
+            tag = f"[{tag}, {tag.replace('_',' ')}]"
+        elif ' ' in tag:
+             tag = f"[{tag}, {tag.replace(' ','_')}]"
+        updated_tags.append(tag)
+        
+    tag_string = "[" + ','.join(updated_tags)
+        
+    if or_groups:
+        all_groups_string = '['
+        all_groups_tags = []
+        for group in or_groups:
+            single_group_tags = []
+            single_group_string = '['
+            tags = group.split(', ')
+            for tag in tags:
+                tag = tag.strip()
+                if tag == "":
+                    continue
+                if not tag.startswith('\"'):
+                    tag = '\"' + tag + '\"'
+                if '_' in tag:
+                    tag = f"[{tag}, {tag.replace('_',' ')}]"
+                elif ' ' in tag:
+                    tag = f"[{tag}, {tag.replace(' ','_')}]"
+                single_group_tags.append(tag)  
+            # end of individual group
+            single_group_string += ', '.join(single_group_tags) + ']'
+            all_groups_tags.append(single_group_string)
+        # end of all groups
+        if len(all_groups_tags) > 1:
+            all_groups_string += ', '.join(all_groups_tags) + ']'
+        else:
+            all_groups_string = all_groups_tags[0]
+        
+        tag_string += ',' + all_groups_string
+            
+    
+    
+    # tag_string = tag_string[:-1] if tag_string != '[' else tag_string
+    if tag_string != "[":
+        tag_string = tag_string + ","
+    tag_string += "\"system:archive\"]"
+    url = urllib.parse.quote(tag_string)
+    return url   

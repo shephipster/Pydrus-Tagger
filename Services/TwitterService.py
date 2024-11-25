@@ -1,6 +1,5 @@
 import requests
 import os
-from dotenv import load_dotenv
 import re
 
 from PIL import Image, ImageOps, ImageFilter
@@ -9,7 +8,6 @@ from io import BytesIO
 import concurrent.futures
 from time import time as timer
 
-load_dotenv()
 
 TWITTER_URL = "https://api.twitter.com/2/tweets/{}"
 BEARER_TOKEN = os.getenv('TWITTER_BEARER_TOKEN')

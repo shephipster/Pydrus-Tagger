@@ -1,5 +1,5 @@
-from Services import DanbooruService, TwitterService, GelbooruService, E621Service, YandereService
-
+from Services import DanbooruService, GelbooruService, E621Service, YandereService
+#  from Services import TwitterService
 
 class Tagger:
 
@@ -53,13 +53,13 @@ class Tagger:
                 allTags.add(Tagger.getCleanTag(t))
         return allTags
 
-    def getTwitterTags(references):
-        allTags = set()
-        for r in references:
-            tags = TwitterService.getTagsFromId(r[1])
-            for t in tags:
-                allTags.add(Tagger.getCleanTag(t))
-        return allTags
+    # def getTwitterTags(references):
+    #     allTags = set()
+    #     for r in references:
+    #         tags = TwitterService.getTagsFromId(r[1])
+    #         for t in tags:
+    #             allTags.add(Tagger.getCleanTag(t))
+    #     return allTags
 
     def getE621Tags(references):
         allTags = set()

@@ -1,9 +1,7 @@
 import requests
 #import os
 import sys
-from dotenv import load_dotenv
 
-load_dotenv()
 
 #for some reason you can't search by id, but the id is a tag and
 # you can search by tags... Makes no sense, but whatever
